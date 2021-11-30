@@ -452,7 +452,7 @@ if options.inputFile is None:
         new_prev_endtimeinsec = math.ceil(long(new_prev_endtime_epoch)/1000.0)
         new_prev_endtime = time.strftime("%Y%m%d%H%M%S", time.localtime(long(new_prev_endtimeinsec)))
         update_timestamp(new_prev_endtime)
-        sendData(hashlib.md5(os.path.join(homepath, datadir + date + fileadd + ".csv")).hexdigest())
+        sendData(hashlib.sha256(os.path.join(homepath, datadir + date + fileadd + ".csv")).hexdigest())
 else:
     if os.path.isfile(os.path.join(homepath,options.inputFile)):
         numlines = len(open(os.path.join(homepath,options.inputFile)).readlines())
