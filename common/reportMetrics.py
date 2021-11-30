@@ -250,7 +250,7 @@ def send_data(metric_data_dict, file_path, chunk_serial_number):
         to_send_data_dict["instanceType"] = get_ec2_instance_type()
     # additional data to send for replay agents
     if "FileReplay" in parameters['mode']:
-        to_send_data_dict["fileID"] = hashlib.md5(file_path).hexdigest()
+        to_send_data_dict["fileID"] = hashlib.sha256(file_path).hexdigest()
         if parameters['mode'] == "logFileReplay":
             to_send_data_dict["agentType"] = "LogFileReplay"
             to_send_data_dict["minTimestamp"] = ""
