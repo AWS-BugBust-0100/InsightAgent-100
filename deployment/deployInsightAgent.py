@@ -4,6 +4,7 @@ import argparse
 import getpass
 import subprocess
 import os
+import shlex
 import sys
 
 '''
@@ -129,16 +130,16 @@ if __name__ == '__main__':
         proc = subprocess.Popen("wget --no-check-certificate https://github.com/insightfinder/InsightAgent/archive/master.tar.gz -O insightagent.tar.gz", cwd=os.getcwd(), stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         (out,err) = proc.communicate()
     print "Starting Installation"
-    proc = subprocess.Popen(["pyenv/bin/python "+os.path.join(homepath,"installInsightAgent.py")+" -n "+user+" -u "+userInsightfinder+" -k "+licenseKey+" -s "+samplingInterval+" -r "+reportingInterval+" -t "+agentType+" -p "+password], cwd=homepath, stdout=subprocess.PIPE, shell=True)
+    proc = subprocess.Popen(["pyenv/bin/python "+shlex.quote(os.path.join(homepath,"installInsightAgent.py"))+" -n "+shlex.quote(user)+" -u "+shlex.quote(userInsightfinder)+" -k "+shlex.quote(licenseKey)+" -s "+shlex.quote(samplingInterval)+" -r "+shlex.quote(reportingInterval)+" -t "+shlex.quote(agentType)+" -p "+shlex.quote(password)], cwd=homepath, stdout=subprocess.PIPE, shell=True)
     (out,err) = proc.communicate()
     if ("error" in out) or ("Not enough disk space" in out):
         sys.exit(out)
     print out
     print "Proceeding to Deployment"
     if serverUrl is None:
-        proc = subprocess.Popen(["pyenv/bin/python "+os.path.join(homepath,"startcron.py")+ " -i " +projectName+" -n "+user+" -u "+userInsightfinder+" -k "+licenseKey+" -s "+samplingInterval+" -r "+reportingInterval+" -t "+agentType+" -p "+password], cwd=homepath, stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(["pyenv/bin/python "+shlex.quote(os.path.join(homepath,"startcron.py"))+ " -i " +shlex.quote(projectName)+" -n "+shlex.quote(user)+" -u "+shlex.quote(userInsightfinder)+" -k "+shlex.quote(licenseKey)+" -s "+shlex.quote(samplingInterval)+" -r "+shlex.quote(reportingInterval)+" -t "+shlex.quote(agentType)+" -p "+shlex.quote(password)], cwd=homepath, stdout=subprocess.PIPE, shell=True)
     else:
-        proc = subprocess.Popen(["pyenv/bin/python "+os.path.join(homepath,"startcron.py")+ " -i " +projectName+" -n "+user+" -u "+userInsightfinder+" -k "+licenseKey+" -s "+samplingInterval+" -r "+reportingInterval+" -t "+agentType+" -p "+password+" -w "+serverUrl], cwd=homepath, stdout=subprocess.PIPE, shell=True)
+        proc = subprocess.Popen(["pyenv/bin/python "+shlex.quote(os.path.join(homepath,"startcron.py"))+ " -i " +shlex.quote(projectName)+" -n "+shlex.quote(user)+" -u "+shlex.quote(userInsightfinder)+" -k "+shlex.quote(licenseKey)+" -s "+shlex.quote(samplingInterval)+" -r "+shlex.quote(reportingInterval)+" -t "+shlex.quote(agentType)+" -p "+shlex.quote(password)+" -w "+shlex.quote(serverUrl)], cwd=homepath, stdout=subprocess.PIPE, shell=True)
     (out,err) = proc.communicate()
     print out
     clearDownloads()
