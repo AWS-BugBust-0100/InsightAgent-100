@@ -4,6 +4,7 @@ import argparse
 import getpass
 import subprocess
 import os
+import shlex
 import sys
 
 '''
@@ -134,7 +135,7 @@ if __name__ == '__main__':
     print "Starting Deployment"
     print "Homepath: ", homepath
     downloadFile("agentMaster.py");
-    command = ""+os.path.join(homepath,"installAgentMaster.sh")+ " -i " +projectName+" -u "+userInsightfinder+" -k "+licenseKey+" -s "+samplingInterval+" -r "+reportingInterval+" -t "+agentType+" -p "+password+" -c "+"30"+" -w "+serverUrl+" -f "+forceInstall
+    command = ""+shlex.quote(os.path.join(homepath,"installAgentMaster.sh"))+ " -i " +shlex.quote(projectName)+" -u "+shlex.quote(userInsightfinder)+" -k "+shlex.quote(licenseKey)+" -s "+shlex.quote(samplingInterval)+" -r "+shlex.quote(reportingInterval)+" -t "+shlex.quote(agentType)+" -p "+shlex.quote(password)+" -c "+"30"+" -w "+shlex.quote(serverUrl)+" -f "+forceInstall
     print "Command", command
     proc = subprocess.Popen([command], cwd=homepath, stdout=subprocess.PIPE, shell=True)
 
