@@ -248,7 +248,7 @@ def get_if_config_vars():
             sys.exit(1)
 
         # check required variables
-        if len(user_name) == 0:
+        if not user_name:
             logger.warning('Agent not correctly configured (user_name). Check config file.')
             sys.exit(1)
         if len(license_key) == 0:
