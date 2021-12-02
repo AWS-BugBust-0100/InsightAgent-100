@@ -280,6 +280,7 @@ def get_component_from_cache(instance):
             return ""
 
 
+       
 def initialize_cache_connection():
     # connect to local cache
     cache_loc = abs_path_from_cur(CACHE_NAME)
