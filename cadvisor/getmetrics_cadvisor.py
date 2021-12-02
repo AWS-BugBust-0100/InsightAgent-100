@@ -363,7 +363,7 @@ def get_cli_config_vars():
     elif options.quiet:
         config_vars['log_level'] = logging.WARNING
 
-    if len(options.time_zone) != 0 and options.time_zone in pytz.all_timezones:
+    if options.time_zone and options.time_zone in pytz.all_timezones:
         config_vars['time_zone'] = pytz.timezone(options.time_zone)
 
     return config_vars
