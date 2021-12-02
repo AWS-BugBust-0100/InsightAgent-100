@@ -292,32 +292,36 @@ def writeToCsv():
     global AllMetricList
     log = ""
     fields = ""
-    resource_usage_file = open(os.path.join(homepath,datadir+date+".csv"),'a+')
-    csvContent = resource_usage_file.readlines()
-    numlines = len(csvContent)
-    for metric in AllMetricList:
-        if log != "":
-            log = log + ","
-        if fields != "":
-            fields = fields + ","
-        log = log + str(AllMetricDict[metric])
-        fields = fields + str(metric)
-    if numlines < 1:
-        resource_usage_file.write("%s\n"%(fields))
-    else:
-        headercsv = csvContent[0]
-        header = headercsv.split("\n")[0].split(",")
-        fieldList = fields.split(",")
-        if cmp(header,fieldList) != 0:
-            oldFile = os.path.join(homepath,datadir+date+".csv")
-            newFile = os.path.join(homepath,datadir+date+"."+time.strftime("%Y%m%d%H%M%S")+".csv")
-            os.rename(oldFile,newFile)
-            resource_usage_file = open(os.path.join(homepath,datadir+date+".csv"), 'a+')
+    try:
+        resource_usage_file = open(os.path.join(homepath,datadir+date+".csv"),'a+')
+        csvContent = resource_usage_file.readlines()
+        numlines = len(csvContent)
+        for metric in AllMetricList:
+            if log != "":
+                log = log + ","
+            if fields != "":
+                fields = fields + ","
+            log = log + str(AllMetricDict[metric])
+            fields = fields + str(metric)
+        if numlines < 1:
             resource_usage_file.write("%s\n"%(fields))
-    resource_usage_file.write("%s\n"%(log))
-    resource_usage_file.flush()
-    resource_usage_file.close()
+        else:
+            headercsv = csvContent[0]
+            header = headercsv.split("\n")[0].split(",")
+            fieldList = fields.split(",")
+            if cmp(header,fieldList) != 0:
+                oldFile = os.path.join(homepath,datadir+date+".csv")
+                newFile = os.path.join(homepath,datadir+date+"."+time.strftime("%Y%m%d%H%M%S")+".csv")
+                os.rename(oldFile,newFile)
+                resource_usage_file = open(os.path.join(homepath,datadir+date+".csv"), 'a+')
+                resource_usage_file.write("%s\n"%(fields))
+        resource_usage_file.write("%s\n"%(log))
+        resource_usage_file.flush()
 
+    finally:
+        resource_usage_file.close()
+
+        
 def getJson(url):
     request = urllib2.Request(url)
     response = urllib2.urlopen(request, timeout=10)
