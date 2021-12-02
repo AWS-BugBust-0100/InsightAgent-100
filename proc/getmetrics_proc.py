@@ -74,8 +74,8 @@ def init_previous_results():
         if(eachfile == "cpumetrics.txt"):
             get_cpuusage(eachfile, tokens, first_result)
         else:
-            txt_file = open(os.path.join(homepath,datadir,eachfile))
-            lines = txt_file.read().split("\n")
+            with open(os.path.join(homepath,datadir,eachfile)) as txt_file:
+                lines = txt_file.read().split("\n")
             for eachline in lines:
                 tokens = eachline.split("=")
                 if(len(tokens) == 1):
