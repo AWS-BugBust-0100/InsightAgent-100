@@ -175,6 +175,8 @@ def sshInstallHypervisor(retry,hostname,hostMap):
     except:
         print "Unexpected error in %s:"%hostname
         return sshInstallHypervisor(retry-1,hostname,hostMap)
+    finally:
+        s.close()
 
 
 
