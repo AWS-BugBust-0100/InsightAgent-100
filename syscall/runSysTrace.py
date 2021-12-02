@@ -41,7 +41,7 @@ def updateFile(filepath, filename, newSession):
         open(os.path.join(file), 'a+').writelines(newSession+"\n")
     else:
         lines = open(file).readlines()
-        if len(lines) == 1:        
+        if len(lines) == 1:
             currentSession = lines[0].rstrip('\n')
             lines.append(newSession+'\n')
             open(os.path.join(file), 'w+').writelines(lines[0:])
@@ -49,7 +49,10 @@ def updateFile(filepath, filename, newSession):
             lines.append(newSession+'\n')
             oldSession = lines[0].rstrip('\n')
             currentSession = lines[1].rstrip('\n')
-            open(os.path.join(file), 'w+').writelines(lines[1:])
+            try:
+                conn = open(os.path.join(file), 'w+').writelines(lines[1:])
+            finally:
+                conn.close()
     return oldSession, currentSession
 
 
