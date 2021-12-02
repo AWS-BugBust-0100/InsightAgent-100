@@ -378,8 +378,13 @@ def getmetrics():
                 configFileName = [fname for fname in os.listdir("/var/lib/docker/containers/"+dockers[i]+"/") if fname.startswith("config")]
                 if os.path.isfile("/var/lib/docker/containers/"+dockers[i]+"/"+configFileName[0]) == False:
                     continue
-                containerConfig = open("/var/lib/docker/containers/"+dockers[i]+"/"+configFileName[0],"r")
-                dataline = containerConfig.readline()
+
+                try:
+                    containerConfig = open("/var/lib/docker/containers/"+dockers[i]+"/"+configFileName[0],"r")
+                    dataline = containerConfig.readline()
+                finally:
+                    containerConfig.close()
+
                 containerName = json.loads(dataline)["Name"]
                 if "insightfinder" in containerName:
                     host = "insightagent"
