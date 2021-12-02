@@ -63,7 +63,11 @@ if os.path.exists(json_file_path):  # check if file exists
         json_data = json.dumps(result)
         url = serverUrl + "/customprojectrawdata"
         time.sleep(5)
-        response = requests.post(url, data=json.loads(json_data))
+        try:
+            response = requests.post(url, data=json.loads(json_data))
+        finally:
+            response.close()
+            pass
         print response
 
     else:
