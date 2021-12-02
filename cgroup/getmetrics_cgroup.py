@@ -286,8 +286,9 @@ try:
         listtocsv(fields)
     listtocsv(values)
     resource_usage_file.flush()
-    resource_usage_file.close()
     update_results(dict)
+finally:
+    resource_usage_file.close()
 
 except KeyboardInterrupt:
     print "Interrupt from keyboard"
