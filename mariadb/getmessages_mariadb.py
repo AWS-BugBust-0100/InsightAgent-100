@@ -47,144 +47,143 @@ def start_data_processing():
     # open conn
     conn = pymysql.connect(**agent_config_vars['mariadb_kwargs'])
     logger.info('Started connection.')
-    cursor = conn.cursor()
+    with conn.cursor() as cursor:
 
-    sql_str = None
+        sql_str = None
 
-    metrics = agent_config_vars['metrics'] or []
-    metric_regex = None
-    if agent_config_vars['metrics_whitelist']:
-        try:
-            metric_regex = regex.compile(agent_config_vars['metrics_whitelist'])
-        except Exception as e:
-            logger.error(e)
+        metrics = agent_config_vars['metrics'] or []
+        metric_regex = None
+        if agent_config_vars['metrics_whitelist']:
+            try:
+                metric_regex = regex.compile(agent_config_vars['metrics_whitelist'])
+            except Exception as e:
+                logger.error(e)
 
-    instance_filter_by_company_field = None
-    company_regex = None
-    company_list = []
-    if agent_config_vars['company_whitelist']:
-        try:
-            company_regex = regex.compile(agent_config_vars['company_whitelist'])
-        except Exception as e:
-            logger.error(e)
+        instance_filter_by_company_field = None
+        company_regex = None
+        company_list = []
+        if agent_config_vars['company_whitelist']:
+            try:
+                company_regex = regex.compile(agent_config_vars['company_whitelist'])
+            except Exception as e:
+                logger.error(e)
 
-    # get company mapping info
-    if agent_config_vars['company_map_conn']:
-        instance_filter_by_company_field = agent_config_vars['company_map_conn']['instance_filter_by_company_field']
-        try:
-            logger.info('Starting execute SQL to getting instance mapping info.')
-            sql_str = "select * from {}.{}".format(agent_config_vars['company_map_conn']['company_map_database'],
-                                                   agent_config_vars['company_map_conn']['company_map_table'])
-            logger.debug(sql_str)
+        # get company mapping info
+        if agent_config_vars['company_map_conn']:
+            instance_filter_by_company_field = agent_config_vars['company_map_conn']['instance_filter_by_company_field']
+            try:
+                logger.info('Starting execute SQL to getting instance mapping info.')
+                sql_str = "select * from {}.{}".format(agent_config_vars['company_map_conn']['company_map_database'],
+                                                       agent_config_vars['company_map_conn']['company_map_table'])
+                logger.debug(sql_str)
 
-            # execute sql string
-            cursor.execute(sql_str)
+                # execute sql string
+                cursor.execute(sql_str)
 
-            company_map = {}
-            for message in cursor:
-                id_str = str(message[agent_config_vars['company_map_conn']['company_map_id_field']])
-                name_str = str(message[agent_config_vars['company_map_conn']['company_map_name_field']])
+                company_map = {}
+                for message in cursor:
+                    id_str = str(message[agent_config_vars['company_map_conn']['company_map_id_field']])
+                    name_str = str(message[agent_config_vars['company_map_conn']['company_map_name_field']])
 
-                if company_regex and not company_regex.match(name_str):
-                    continue
-
-                company_list.append(id_str)
-                company_map[id_str] = name_str
-            agent_config_vars['company_map'] = company_map
-        except ProgrammingError as e:
-            logger.error(e)
-            logger.error('SQL execute error: '.format(sql_str))
-
-    # get instance mapping info
-    if agent_config_vars['instance_map_conn']:
-        try:
-            logger.info('Starting execute SQL to getting instance mapping info.')
-            sql_str = "select * from {}.{}".format(agent_config_vars['instance_map_conn']['instance_map_database'],
-                                                   agent_config_vars['instance_map_conn']['instance_map_table'])
-            logger.debug(sql_str)
-
-            # execute sql string
-            cursor.execute(sql_str)
-
-            instance_map = {}
-            for message in cursor:
-                id_str = str(message[agent_config_vars['instance_map_conn']['instance_map_id_field']])
-                name_str = str(message[agent_config_vars['instance_map_conn']['instance_map_name_field']])
-
-                # filter instance by company
-                if instance_filter_by_company_field:
-                    company_id = str(message[instance_filter_by_company_field])
-                    if company_regex and company_id not in company_list:
+                    if company_regex and not company_regex.match(name_str):
                         continue
 
-                instance_map[id_str] = name_str
-            agent_config_vars['instance_map'] = instance_map
-        except ProgrammingError as e:
-            logger.error(e)
-            logger.error('SQL execute error: '.format(sql_str))
+                    company_list.append(id_str)
+                    company_map[id_str] = name_str
+                agent_config_vars['company_map'] = company_map
+            except ProgrammingError as e:
+                logger.error(e)
+                logger.error('SQL execute error: '.format(sql_str))
 
-    # get metric mapping info
-    if agent_config_vars['metric_map_conn']:
-        try:
-            logger.info('Starting execute SQL to getting metric mapping info.')
-            sql_str = "select * from {}.{}".format(agent_config_vars['metric_map_conn']['metric_map_database'],
-                                                   agent_config_vars['metric_map_conn']['metric_map_table'])
-            logger.debug(sql_str)
+        # get instance mapping info
+        if agent_config_vars['instance_map_conn']:
+            try:
+                logger.info('Starting execute SQL to getting instance mapping info.')
+                sql_str = "select * from {}.{}".format(agent_config_vars['instance_map_conn']['instance_map_database'],
+                                                       agent_config_vars['instance_map_conn']['instance_map_table'])
+                logger.debug(sql_str)
 
-            # execute sql string
-            cursor.execute(sql_str)
+                # execute sql string
+                cursor.execute(sql_str)
 
-            metric_map = {}
-            for message in cursor:
-                id_str = str(message[agent_config_vars['metric_map_conn']['metric_map_id_field']])
-                name_str = str(message[agent_config_vars['metric_map_conn']['metric_map_name_field']].encode('utf8'))
+                instance_map = {}
+                for message in cursor:
+                    id_str = str(message[agent_config_vars['instance_map_conn']['instance_map_id_field']])
+                    name_str = str(message[agent_config_vars['instance_map_conn']['instance_map_name_field']])
 
-                # filter metrics if need
-                if len(metrics) > 0 and name_str not in metrics:
-                    continue
-                if metric_regex and not metric_regex.match(name_str):
-                    continue
+                    # filter instance by company
+                    if instance_filter_by_company_field:
+                        company_id = str(message[instance_filter_by_company_field])
+                        if company_regex and company_id not in company_list:
+                            continue
 
-                metric_map[id_str] = name_str
-            agent_config_vars['metric_map'] = metric_map
-        except ProgrammingError as e:
-            logger.error(e)
-            logger.error('SQL execute error: '.format(sql_str))
+                    instance_map[id_str] = name_str
+                agent_config_vars['instance_map'] = instance_map
+            except ProgrammingError as e:
+                logger.error(e)
+                logger.error('SQL execute error: '.format(sql_str))
 
-    # get database list and filter by whitelist
-    database_list = []
-    if agent_config_vars['database_list'].startswith('sql:'):
-        try:
-            logger.info('Starting execute SQL to getting database info.')
-            sql_str = agent_config_vars['database_list'].split('sql:')[1]
-            logger.debug(sql_str)
+        # get metric mapping info
+        if agent_config_vars['metric_map_conn']:
+            try:
+                logger.info('Starting execute SQL to getting metric mapping info.')
+                sql_str = "select * from {}.{}".format(agent_config_vars['metric_map_conn']['metric_map_database'],
+                                                       agent_config_vars['metric_map_conn']['metric_map_table'])
+                logger.debug(sql_str)
 
-            # execute sql string
-            cursor.execute(sql_str)
+                # execute sql string
+                cursor.execute(sql_str)
 
-            for message in cursor:
-                database = str(message['Database'])
-                database_list.append(database)
+                metric_map = {}
+                for message in cursor:
+                    id_str = str(message[agent_config_vars['metric_map_conn']['metric_map_id_field']])
+                    name_str = str(message[agent_config_vars['metric_map_conn']['metric_map_name_field']].encode('utf8'))
 
-        except ProgrammingError as e:
-            logger.error(e)
-            logger.error('SQL execute error: '.format(sql_str))
-    else:
-        database_list = [x for x in agent_config_vars['database_list'].split(',') if x.strip()]
+                    # filter metrics if need
+                    if len(metrics) > 0 and name_str not in metrics:
+                        continue
+                    if metric_regex and not metric_regex.match(name_str):
+                        continue
 
-    if agent_config_vars['database_whitelist']:
-        try:
-            db_regex = regex.compile(agent_config_vars['database_whitelist'])
-            database_list = list(filter(db_regex.match, database_list))
-        except Exception as e:
-            logger.error(e)
-    if len(database_list) == 0:
-        logger.error('Database list is empty')
-        sys.exit(1)
+                    metric_map[id_str] = name_str
+                agent_config_vars['metric_map'] = metric_map
+            except ProgrammingError as e:
+                logger.error(e)
+                logger.error('SQL execute error: '.format(sql_str))
 
-    # close cursor
-    cursor.close()
-    conn.close()
+        # get database list and filter by whitelist
+        database_list = []
+        if agent_config_vars['database_list'].startswith('sql:'):
+            try:
+                logger.info('Starting execute SQL to getting database info.')
+                sql_str = agent_config_vars['database_list'].split('sql:')[1]
+                logger.debug(sql_str)
+
+                # execute sql string
+                cursor.execute(sql_str)
+
+                for message in cursor:
+                    database = str(message['Database'])
+                    database_list.append(database)
+
+            except ProgrammingError as e:
+                logger.error(e)
+                logger.error('SQL execute error: '.format(sql_str))
+        else:
+            database_list = [x for x in agent_config_vars['database_list'].split(',') if x.strip()]
+
+        if agent_config_vars['database_whitelist']:
+            try:
+                db_regex = regex.compile(agent_config_vars['database_whitelist'])
+                database_list = list(filter(db_regex.match, database_list))
+            except Exception as e:
+                logger.error(e)
+        if len(database_list) == 0:
+            logger.error('Database list is empty')
+            sys.exit(1)
+
+        # close cursor
+        conn.close()
 
     # query data from database list
     # get sql string
