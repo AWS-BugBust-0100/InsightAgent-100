@@ -148,8 +148,8 @@ def calculate_cpudelta(current_result):
     return totalresult
 
 def get_cpuusage(filename,field_values,which_dict):
-    cpuusage_file = open(os.path.join(homepath,datadir,filename))
-    lines = cpuusage_file.read().split("\n")
+    with open(os.path.join(homepath,datadir,filename)) as cpuusage_file:
+        lines = cpuusage_file.read().split("\n")
     cpu_dict={}
     if len(lines) == 1:
         return
