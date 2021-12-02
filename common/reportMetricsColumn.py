@@ -212,10 +212,13 @@ def sendData(fileID):
     json_data = json.dumps(alldata)
     #print json_data
     url = serverUrl + "/customprojectrawdata"
-    if agentType == "hypervisor":
-        response = urllib.urlopen(url, data=urllib.urlencode(alldata))
-    else:
-        response = requests.post(url, data=json.loads(json_data))
+    try:
+        if agentType == "hypervisor":
+            response = urllib.urlopen(url, data=urllib.urlencode(alldata))
+        else:
+            response = requests.post(url, data=json.loads(json_data))
+    finally:
+        response.close()
 
 def groupByTimestamp(fileReader):
     global reportedDataSize
