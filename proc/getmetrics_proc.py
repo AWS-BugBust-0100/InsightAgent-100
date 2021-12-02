@@ -183,6 +183,7 @@ def is_number(s):
 
 filenames = ["timestamp.txt", "cpumetrics.txt","diskmetrics.txt","diskusedmetrics.txt","diskpercent.txt","networkmetrics.txt","networkinterfacemetrics.txt","memmetrics.txt","loadavg.txt"]
 fields = []
+
 try:
     date = time.strftime("%Y%m%d")
     resource_usage_file = open(os.path.join(homepath,datadir+date+".csv"),'a+')
@@ -259,9 +260,10 @@ try:
             listtocsv(fields)
     listtocsv(values)
     resource_usage_file.flush()
-    resource_usage_file.close()
     update_results(dict)
 except KeyboardInterrupt:
     print "Interrupt from keyboard"
+finally:
+    resource_usage_file.close()
 
 
