@@ -324,7 +324,11 @@ def writeToCsv():
         
 def getJson(url):
     request = urllib2.Request(url)
-    response = urllib2.urlopen(request, timeout=10)
+    try:
+        response = urllib2.urlopen(request, timeout=10)
+    finally:
+        response.close()
+        
     return json.load(response)
 
 def getClusterName(jsondata):
