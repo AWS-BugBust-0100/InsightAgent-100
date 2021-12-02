@@ -212,6 +212,7 @@ def sendData(fileID):
     json_data = json.dumps(alldata)
     #print json_data
     url = serverUrl + "/customprojectrawdata"
+
     try:
         if agentType == "hypervisor":
             response = urllib.urlopen(url, data=urllib.urlencode(alldata))
