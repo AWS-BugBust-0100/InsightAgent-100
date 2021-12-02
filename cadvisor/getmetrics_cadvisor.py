@@ -395,7 +395,7 @@ def check_csv_fieldnames(csv_field_names, all_fields):
 
     # optional
     for field in all_fields['optional_fields']:
-        if len(all_fields['optional_fields'][field]['name']) != 0:
+        if all_fields['optional_fields'][field]['name']:
             index = get_field_index(csv_field_names, all_fields['optional_fields'][field]['name'], field)
             if isinstance(index, int):
                 all_fields['optional_fields'][field]['index'] = index
