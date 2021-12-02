@@ -35,7 +35,6 @@ def sshStopCron(retry,hostname):
         stdin.write(password+'\n')
         stdin.flush()
         session.recv_exit_status() #wait for exec_command to finish
-        s.close()
         print "Stopped Cron in ", hostname
         q.task_done()
         return
@@ -48,6 +47,8 @@ def sshStopCron(retry,hostname):
     except socket.error, e:
         print "Socket connection failed in %s:"%hostname, e
         return sshStopCron(retry-1,hostname)
+    finally:
+        s.close()
 
 def get_args():
     parser = argparse.ArgumentParser(
