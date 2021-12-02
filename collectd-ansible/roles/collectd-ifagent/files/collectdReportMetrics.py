@@ -313,12 +313,14 @@ def set_raw_data_from_collectd_dir(aggregate_cpu, all_latest_timestamps, date_l,
 def calculate_avg_cpu_values(all_latest_timestamps, each_file, filenames, new_prev_endtime_epoch_l, raw_data_l,
                              start_time_epoch_l, date_l):
     try:
-        csv_file_1 = open(os.path.join(csvpath, each_file + date_l))
+        with open(os.path.join(csvpath, each_file + date_l)) as csv_file_1:
+            reader1 = csv.reader(csv_file_1)
+            
         csv_file_2 = open(os.path.join(
             csvpath, 'aggregation-cpu-average/cpu-user-' + date_l))
         csv_file_3 = open(os.path.join(
             csvpath, 'aggregation-cpu-average/cpu-idle-' + date_l))
-        reader1 = csv.reader(csv_file_1)
+        
         reader2 = csv.reader(csv_file_2)
         reader3 = csv.reader(csv_file_3)
 
