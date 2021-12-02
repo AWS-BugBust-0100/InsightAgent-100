@@ -21,8 +21,12 @@ def handle_same_format_files(file_paths, out_file_path):
     try:
         # get file lines
         count = -1
-        openFileVar = open(str(file_paths[0]), 'rU')
-        for count, line in enumerate(openFileVar):
+        try:
+            openFileVar = open(str(file_paths[0]), 'rU')
+            for count, line in enumerate(openFileVar):
+                pass
+        finally:
+            openFileVar.close()
             pass
         print 'Rows: {}'.format(count)
 
@@ -76,7 +80,6 @@ def handle_same_format_files(file_paths, out_file_path):
 
     finally:
         # close files
-        openFileVar.close()
         fout.close()
         for item in file_list:
             item.close()
