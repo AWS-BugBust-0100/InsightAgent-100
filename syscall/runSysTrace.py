@@ -49,7 +49,8 @@ def updateFile(filepath, filename, newSession):
             lines.append(newSession+'\n')
             oldSession = lines[0].rstrip('\n')
             currentSession = lines[1].rstrip('\n')
-            open(os.path.join(file), 'w+').writelines(lines[1:])
+            with open(os.path.join(file), 'w+') as f:
+                f.writelines(lines[1:])
     return oldSession, currentSession
 
 
