@@ -141,21 +141,21 @@ def is_json(myjson):
   except ValueError, e:
     return False
   return True
-
 def getTotalSize(iFile):
-    filejson = open(os.path.join(homepath, iFile))
-    allJsonData = []
-    if '.json' in iFile:
-        jsonData = json.load(filejson)
-    else:
-        jsonData = []
-        for line in filejson:
-            line = line[line.find("{"):]
-            jsonData.append(json.loads(line))
-    for row in jsonData:
-        allJsonData.append(row)
-
-    filejson.close()
+    try:
+        filejson = open(os.path.join(homepath, iFile))
+        allJsonData = []
+        if '.json' in iFile:
+            jsonData = json.load(filejson)
+        else:
+            jsonData = []
+            for line in filejson:
+                line = line[line.find("{"):]
+                jsonData.append(json.loads(line))
+        for row in jsonData:
+            allJsonData.append(row)
+    finally:
+        filejson.close()
     return len(bytearray(json.dumps(allJsonData)))
 
 #send data to insightfinder
