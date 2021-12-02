@@ -44,7 +44,11 @@ def updateFile(filepath, filename, newSession):
         if len(lines) == 1:
             currentSession = lines[0].rstrip('\n')
             lines.append(newSession+'\n')
-            open(os.path.join(file), 'w+').writelines(lines[0:])
+            try:
+                conn2 = open(os.path.join(file), 'w+').writelines(lines[0:])
+            finally:
+                conn2.close()
+                pass
         else:
             lines.append(newSession+'\n')
             oldSession = lines[0].rstrip('\n')
@@ -54,7 +58,6 @@ def updateFile(filepath, filename, newSession):
             finally:
                 conn.close()
     return oldSession, currentSession
-
 
 def main():
     global homepath
