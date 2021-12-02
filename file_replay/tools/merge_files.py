@@ -178,61 +178,62 @@ def handle_diff_format_files(file_paths, out_file_path, step, memory):
         print "Start to combine file {}".format(out_file_path)
         if os.path.exists(out_file_path):
             os.remove(out_file_path)
-        fout = open(str(out_file_path), "a")
-        with open(str(sorted_file_name), "rb") as sorted_file:
-            same_timestamp = None
-            same_timestamp_rows = []
-            same_timestamp_data_map = {}
-
-            num = -1
-            row_num = 0
-
-            buf_lines = sorted_file.readlines(FILE_READ_CHUNK_SIZE)
-            while buf_lines:
-                for line in buf_lines:
-                    num += 1
-                    if num == 0:
-                        # write header
-                        fout.write(line)
-                    else:
-                        # write data
-                        cols = line[:-1].split(',')
-                        timestamp = cols[0]
-                        data_cols = cols[1:]
-
-                        if num == 1:
-                            same_timestamp = timestamp
-                            same_timestamp_rows = [data_cols]
+        try:
+            fout = open(str(out_file_path), "a")
+            with open(str(sorted_file_name), "rb") as sorted_file:
+                same_timestamp = None
+                same_timestamp_rows = []
+                same_timestamp_data_map = {}
+    
+                num = -1
+                row_num = 0
+    
+                buf_lines = sorted_file.readlines(FILE_READ_CHUNK_SIZE)
+                while buf_lines:
+                    for line in buf_lines:
+                        num += 1
+                        if num == 0:
+                            # write header
+                            fout.write(line)
                         else:
-                            if timestamp == same_timestamp:
-                                same_timestamp_rows.append(data_cols)
-                            else:
-                                # combine rows
-                                parse_combine_data(fout, same_timestamp, same_timestamp_rows, same_timestamp_data_map)
-                                row_num += 1
-                                if row_num % 1000 == 0:
-                                    fout.flush()
-                                    print "Complete {} rows".format(row_num)
-
-                                # reset timestamp and data
+                            # write data
+                            cols = line[:-1].split(',')
+                            timestamp = cols[0]
+                            data_cols = cols[1:]
+    
+                            if num == 1:
                                 same_timestamp = timestamp
                                 same_timestamp_rows = [data_cols]
-                                same_timestamp_data_map = {}
-
-                buf_lines = sorted_file.readlines(FILE_READ_CHUNK_SIZE)
-
-            # last row
-            if same_timestamp and len(same_timestamp_rows) > 0:
-                # combine rows
-                parse_combine_data(fout, same_timestamp, same_timestamp_rows, same_timestamp_data_map)
-                row_num += 1
-
-            print "Complete {} rows".format(row_num)
-
-        # close files
-        fout.close()
-        print "Combine file {}".format(out_file_path)
-
+                            else:
+                                if timestamp == same_timestamp:
+                                    same_timestamp_rows.append(data_cols)
+                                else:
+                                    # combine rows
+                                    parse_combine_data(fout, same_timestamp, same_timestamp_rows, same_timestamp_data_map)
+                                    row_num += 1
+                                    if row_num % 1000 == 0:
+                                        fout.flush()
+                                        print "Complete {} rows".format(row_num)
+    
+                                    # reset timestamp and data
+                                    same_timestamp = timestamp
+                                    same_timestamp_rows = [data_cols]
+                                    same_timestamp_data_map = {}
+    
+                    buf_lines = sorted_file.readlines(FILE_READ_CHUNK_SIZE)
+    
+                # last row
+                if same_timestamp and len(same_timestamp_rows) > 0:
+                    # combine rows
+                    parse_combine_data(fout, same_timestamp, same_timestamp_rows, same_timestamp_data_map)
+                    row_num += 1
+    
+                print "Complete {} rows".format(row_num)
+        finally:
+            # close files
+            fout.close()
+            print
+            "Combine file {}".format(out_file_path)
 
 def parse_combine_data(fout, same_timestamp, same_timestamp_rows, same_timestamp_data_map):
     new_data_cols = []
