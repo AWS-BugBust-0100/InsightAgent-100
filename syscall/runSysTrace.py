@@ -39,7 +39,7 @@ def updateFile(filepath, filename, newSession):
     currentSession = "null"
     try:
         if (os.stat(file).st_size == 0):
-            fo = open(os.path.join(file), 'a+').writelines(newSession+"\n")
+            firstOpenInTheFile = open(os.path.join(file), 'a+').writelines(newSession+"\n")
         else:
 
             lines = open(file).readlines()
@@ -60,7 +60,7 @@ def updateFile(filepath, filename, newSession):
                 finally:
                     conn.close()
     finally:
-        fo.close()
+        firstOpenInTheFile.close()
 
     return oldSession, currentSession
 
