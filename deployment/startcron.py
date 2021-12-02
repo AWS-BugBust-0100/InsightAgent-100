@@ -50,7 +50,6 @@ def sshDeploy(retry,hostname):
         stdin.write(password+'\n')
         stdin.flush()
         session.recv_exit_status() #wait for exec_command to finish
-        s.close()
         print "Deploy Succeed in", hostname
         q.task_done()
         return
@@ -65,6 +64,8 @@ def sshDeploy(retry,hostname):
         return sshDeploy(retry-1,hostname)
     except:
         print "Unexpected error in %s:"%hostname
+    finally:
+        s.close()    
 
 def get_args():
     parser = argparse.ArgumentParser(
