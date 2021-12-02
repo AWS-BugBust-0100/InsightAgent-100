@@ -491,7 +491,7 @@ def getmetrics():
                     print "Couldn't fetch memory information for container: " + dockerInstances[i]
                     memUsed = "NaN"
                 try:
-                    if len(metricData['blkio_stats']['io_service_bytes_recursive']) == 0:
+                    if not metricData['blkio_stats']['io_service_bytes_recursive']:
                         diskRead = "NaN"
                         diskWrite = "NaN"
                     else:
