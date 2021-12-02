@@ -294,6 +294,7 @@ def initialize_cache_connection():
                 'CREATE TABLE "cache" ( "instance"	TEXT NOT NULL UNIQUE, "alias"	TEXT NOT NULL, "component"	TEXT)')
     finally:
         cache_con.close()
+        cache_cur.close()
 
     return cache_con, cache_cur
 
