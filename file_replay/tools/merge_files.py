@@ -30,46 +30,44 @@ def handle_same_format_files(file_paths, out_file_path):
 
     if os.path.exists(out_file_path):
         os.remove(out_file_path)
-    fout = open(str(out_file_path), "a")
+    with open(str(out_file_path), "a") as fout:
 
-    # combine headers
-    new_headers = []
-    header_cols = []
-    for index, item in enumerate(file_list):
-        file_name = file_names[index]
-        metric = os.path.splitext(file_name)[0]
-        if '|' not in metric:
-            metric = regex_period.sub('_', regex_underscore.sub('', metric))
-        else:
-            metric = metric.partition('|')
-            metric = regex_period.sub('_', regex_underscore.sub('', '{}.{}'.format(
-                '.'.join(metric[2].split('.')[1:]), metric[0])))
+        # combine headers
+        new_headers = []
+        header_cols = []
+        for index, item in enumerate(file_list):
+            file_name = file_names[index]
+            metric = os.path.splitext(file_name)[0]
+            if '|' not in metric:
+                metric = regex_period.sub('_', regex_underscore.sub('', metric))
+            else:
+                metric = metric.partition('|')
+                metric = regex_period.sub('_', regex_underscore.sub('', '{}.{}'.format(
+                    '.'.join(metric[2].split('.')[1:]), metric[0])))
 
-        header = item.readline().replace('\r', '').replace('\n', '')
-        header_cols = map(lambda a: a.replace('"', ''), header.split(',"')[1:])
-        for col in header_cols:
-            new_headers.append(col + ',metric:' + metric)
-    new_headers_str = ',' + ','.join(['"' + item + '"' for item in new_headers]) + '\n'
-    fout.write(new_headers_str)
-    print "Metric files: {}, Instances: {}".format(len(file_list), len(header_cols))
-    print "All columns: {}".format(len(new_headers) + 1)
+            header = item.readline().replace('\r', '').replace('\n', '')
+            header_cols = map(lambda a: a.replace('"', ''), header.split(',"')[1:])
+            for col in header_cols:
+                new_headers.append(col + ',metric:' + metric)
+        new_headers_str = ',' + ','.join(['"' + item + '"' for item in new_headers]) + '\n'
+        fout.write(new_headers_str)
+        print "Metric files: {}, Instances: {}".format(len(file_list), len(header_cols))
+        print "All columns: {}".format(len(new_headers) + 1)
 
-    # combine data
-    num = 0
-    while num < count:
-        data_list_all = [item.readline().replace('\r', '').replace('\n', '').split(',') for item in file_list]
-        data_list = reduce(lambda x, y: x + y[1:], data_list_all)
-        data_str = ','.join(data_list) + '\n'
+        # combine data
+        num = 0
+        while num < count:
+            data_list_all = [item.readline().replace('\r', '').replace('\n', '').split(',') for item in file_list]
+            data_list = reduce(lambda x, y: x + y[1:], data_list_all)
+            data_str = ','.join(data_list) + '\n'
 
-        fout.write(data_str)
-        num += 1
-        if num % 10000 == 0:
-            fout.flush()
-            print "Complete {} rows".format(num)
-    print "Complete {} rows".format(num)
+            fout.write(data_str)
+            num += 1
+            if num % 10000 == 0:
+                fout.flush()
+                print "Complete {} rows".format(num)
+        print "Complete {} rows".format(num)
 
-    # close files
-    fout.close()
     for item in file_list:
         item.close()
 
