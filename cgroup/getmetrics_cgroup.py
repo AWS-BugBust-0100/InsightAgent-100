@@ -255,9 +255,12 @@ try:
                 continue
             try:
                 txt_file = open(os.path.join(homepath,datadir,correctFile))
+                lines = txt_file.read().split("\n")
             except IOError:
                 continue
-            lines = txt_file.read().split("\n")
+            finally:
+                txt_file.close()
+            
             for eachline in lines:
                 tokens = eachline.split("=")
                 if(len(tokens) == 1):
