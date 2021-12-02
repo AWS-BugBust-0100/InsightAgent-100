@@ -65,23 +65,23 @@ class IngestSentryEvents:
         url = url.format(self.sentry_vars['organization_name'], self.sentry_vars['project_name'])
 
         attempts = 1
-        response = requests.get(url, headers={'Authorization': 'Bearer ' + self.sentry_vars['auth_token']})
-        while response.status_code != 200 and attempts < self.sentry_vars['retries']:
-            print("Failed to send data. Retrying in {} seconds.".format(
-                self.sentry_vars['sleep_seconds']))
-            time.sleep(self.sentry_vars['sleep_seconds'])
-            response = requests.get(url, headers={'Authorization': 'Bearer ' + self.sentry_vars['auth_token']})
-            attempts += 1
-        
-        if response.status_code != 200:
-            message = "Failed to connect to Sentry in {} attempts. Check logs for details. Exiting.".format(
-                self.sentry_vars['retries'])
-            print(message)
-            logger.warning("{} Status Code: {}. Response Text: {}. Response URL: {}.".format(
-                message, response.status_code, response.text, response.url))
-            sys.exit(1)
-        
-        events = response.json()
+        with requests.get(url, headers={'Authorization': 'Bearer ' + self.sentry_vars['auth_token']}) as response:
+            while response.status_code != 200 and attempts < self.sentry_vars['retries']:
+                print("Failed to send data. Retrying in {} seconds.".format(
+                    self.sentry_vars['sleep_seconds']))
+                time.sleep(self.sentry_vars['sleep_seconds'])
+                response = requests.get(url, headers={'Authorization': 'Bearer ' + self.sentry_vars['auth_token']})
+                attempts += 1
+
+            if response.status_code != 200:
+                message = "Failed to connect to Sentry in {} attempts. Check logs for details. Exiting.".format(
+                    self.sentry_vars['retries'])
+                print(message)
+                logger.warning("{} Status Code: {}. Response Text: {}. Response URL: {}.".format(
+                    message, response.status_code, response.text, response.url))
+                sys.exit(1)
+
+            events = response.json()
         if len(events) == 0:
             print("No events in the Sentry project. Exiting.")
             sys.exit(1)
