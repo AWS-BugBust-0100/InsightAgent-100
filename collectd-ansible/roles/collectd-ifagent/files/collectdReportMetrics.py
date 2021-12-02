@@ -81,8 +81,7 @@ def set_info_from_config_ini_file():
             config_vars['project_name'] = parser.get('insightfinder', 'project_name')
             config_vars['user_name'] = parser.get('insightfinder', 'user_name')
 
-            if len(config_vars['license_key']) == 0 or len(config_vars['project_name']) == 0 or len(
-                    config_vars['user_name']) == 0:
+            if not config_vars['license_key'] or not config_vars['project_name'] or not config_vars['user_name']:
                 logger.error("Agent not correctly configured. Check config file.")
                 sys.exit(1)
 
