@@ -93,77 +93,82 @@ def handle_diff_format_files(file_paths, out_file_path, step, memory):
 
     if not step or step == '1':
         print "Start to merge file {}".format(merged_file_name)
-        # open files
-        file_list = [open(str(fp), "rb") for fp in file_paths]
-        file_names = map(lambda a: os.path.basename(a.name), file_list)
-        file_header_points = []
-        file_header_cols = []
+        try:
+            # open files
+            file_list = [open(str(fp), "rb") for fp in file_paths]
+            file_names = map(lambda a: os.path.basename(a.name), file_list)
+            file_header_points = []
+            file_header_cols = []
 
-        # merge metric files
-        if os.path.exists(merged_file_name):
-            os.remove(merged_file_name)
-        fout = open(str(merged_file_name), "a")
-        # combine headers
-        new_headers = []
-        header_lens = 0
-        for index, item in enumerate(file_list):
-            file_name = file_names[index]
-            metric = os.path.splitext(file_name)[0]
-            if '|' not in metric:
-                metric = regex_period.sub('_', regex_underscore.sub('', metric))
-            else:
-                metric = metric.partition('|')
-                metric = regex_period.sub('_', regex_underscore.sub('', '{}.{}'.format(
-                    '.'.join(metric[2].split('.')[1:]), metric[0])))
+            # merge metric files
+            if os.path.exists(merged_file_name):
+                os.remove(merged_file_name)
+            fout = open(str(merged_file_name), "a")
+            # combine headers
+            new_headers = []
+            header_lens = 0
+            for index, item in enumerate(file_list):
+                file_name = file_names[index]
+                metric = os.path.splitext(file_name)[0]
+                if '|' not in metric:
+                    metric = regex_period.sub('_', regex_underscore.sub('', metric))
+                else:
+                    metric = metric.partition('|')
+                    metric = regex_period.sub('_', regex_underscore.sub('', '{}.{}'.format(
+                        '.'.join(metric[2].split('.')[1:]), metric[0])))
 
-            header = item.readline().replace('\r', '').replace('\n', '')
-            header_cols = map(lambda a: a.replace('"', ''), header.split(',"')[1:])
-            # set the header cols points
-            file_header_points.append(header_lens)
-            file_header_cols.append(header_cols)
-            header_lens += len(header_cols)
+                header = item.readline().replace('\r', '').replace('\n', '')
+                header_cols = map(lambda a: a.replace('"', ''), header.split(',"')[1:])
+                # set the header cols points
+                file_header_points.append(header_lens)
+                file_header_cols.append(header_cols)
+                header_lens += len(header_cols)
 
-            for col in header_cols:
-                new_headers.append(col + ',metric:' + metric)
-        new_headers_str = ',' + ','.join(['"' + item + '"' for item in new_headers]) + '\n'
-        fout.write(new_headers_str)
-        print "Metric files: {}".format(len(file_list))
-        print "All columns: {}".format(len(new_headers) + 1)
+                for col in header_cols:
+                    new_headers.append(col + ',metric:' + metric)
+            new_headers_str = ',' + ','.join(['"' + item + '"' for item in new_headers]) + '\n'
+            fout.write(new_headers_str)
+            print
+            "Metric files: {}".format(len(file_list))
+            print
+            "All columns: {}".format(len(new_headers) + 1)
 
-        # combine data
-        num = 0
-        for index, item in enumerate(file_list):
-            header_points = file_header_points[index]
-            header_cols = file_header_cols[index]
-            pre_cols = ['' for i in range(0, header_points)]
-            post_cols = ['' for i in range(0, header_lens - header_points - len(header_cols))]
+            # combine data
+            num = 0
+            for index, item in enumerate(file_list):
+                header_points = file_header_points[index]
+                header_cols = file_header_cols[index]
+                pre_cols = ['' for i in range(0, header_points)]
+                post_cols = ['' for i in range(0, header_lens - header_points - len(header_cols))]
 
-            buf_lines = item.readlines(FILE_READ_CHUNK_SIZE)
-            while buf_lines:
-                for line in buf_lines:
-                    cols = line.replace('\r', '').replace('\n', '').split(',')
-                    time_cols = cols[:1]
-                    data_cols = cols[1:]
-                    new_cols = time_cols + pre_cols + data_cols + post_cols
-                    data_str = ','.join(new_cols) + '\n'
-
-                    if len(new_cols) != len(new_headers) + 1:
-                        print "Error merge row {}".format(num)
-                        continue
-
-                    fout.write(data_str)
-                    num += 1
-                    if num % 10000 == 0:
-                        fout.flush()
-                        print "Complete {} rows".format(num)
                 buf_lines = item.readlines(FILE_READ_CHUNK_SIZE)
-        print "Complete {} rows".format(num)
+                while buf_lines:
+                    for line in buf_lines:
+                        cols = line.replace('\r', '').replace('\n', '').split(',')
+                        time_cols = cols[:1]
+                        data_cols = cols[1:]
+                        new_cols = time_cols + pre_cols + data_cols + post_cols
+                        data_str = ','.join(new_cols) + '\n'
 
-        # close files
-        fout.close()
-        for item in file_list:
-            item.close()
-        print "Merged file {}".format(merged_file_name)
+                        if len(new_cols) != len(new_headers) + 1:
+                            print "Error merge row {}".format(num)
+                            continue
+
+                        fout.write(data_str)
+                        num += 1
+                        if num % 10000 == 0:
+                            fout.flush()
+                            print "Complete {} rows".format(num)
+                    buf_lines = item.readlines(FILE_READ_CHUNK_SIZE)
+            print
+            "Complete {} rows".format(num)
+        finally:
+            # close files
+            fout.close()
+            for item in file_list:
+                item.close()
+            print
+            "Merged file {}".format(merged_file_name)
 
     if not step or step == '2':
         # sort the big merged metric file by timestamp
