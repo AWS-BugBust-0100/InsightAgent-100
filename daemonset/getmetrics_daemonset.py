@@ -256,6 +256,7 @@ def update_docker():
     global newInstanceAvailable
     global dockers
     dockers = os.listdir("/var/lib/docker/containers")
+    
     try:
         cronfile = open(os.path.join(homepath,datadir+"getmetrics_docker.sh"),'w')
         cronfile.write("#!/bin/bash\nDATADIR='data/'\ncd $DATADIR\n")
