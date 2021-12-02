@@ -163,7 +163,7 @@ def build_es_connection_hosts():
             host['use_ssl'] = True
 
         # add ssl info
-        if len(agent_config_vars['elasticsearch_kwargs']) != 0:
+        if agent_config_vars['elasticsearch_kwargs']:
             host.update(agent_config_vars['elasticsearch_kwargs'])
         hosts.append(host)
     logger.debug(hosts)
