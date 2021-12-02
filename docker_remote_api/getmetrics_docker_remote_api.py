@@ -389,7 +389,10 @@ def getmetrics():
                             log = log + "NaN"
                         continue
                     else:
-                        statsFile = open(os.path.join(homepath,datadir+filename),'r')
+                        try:
+                            statsFile = open(os.path.join(homepath,datadir+filename),'r')
+                        finally:
+                            statsFile.close()
                 except IOError as e:
                     print "I/O error({0}): {1}: {2}".format(e.errno, e.strerror, e.filename)
                     continue
