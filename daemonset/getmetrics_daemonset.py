@@ -81,10 +81,13 @@ def initPreviousResults():
         try:
             filename = "stat%s.txt"%dockers[i]
             statsFile = open(os.path.join(homepath,datadir+filename),'r')
+            data = statsFile.readlines()
         except IOError as e:
             print "I/O error({0}): {1}: {2}".format(e.errno, e.strerror, e.filename)
             continue
-        data = statsFile.readlines()
+        finally:
+            statsFile.close()
+
         for eachline in data:
             if isJson(eachline) == True:
                 metricData = json.loads(eachline)
@@ -99,8 +102,14 @@ def initPreviousResults():
         configFileName = [fname for fname in os.listdir("/var/lib/docker/containers/"+dockers[i]+"/") if fname.startswith("config")]
         if os.path.isfile("/var/lib/docker/containers/"+dockers[i]+"/"+configFileName[0]) == False:
             continue
-        containerConfig = open("/var/lib/docker/containers/"+dockers[i]+"/"+configFileName[0],"r")
-        dataline = containerConfig.readline()
+
+        try:
+            containerConfig = open("/var/lib/docker/containers/"+dockers[i]+"/"+configFileName[0],"r")
+            dataline = containerConfig.readline()
+        finally:
+            containerConfig.close()
+
+
         containerName = json.loads(dataline)["Name"]
         fields = ["timestamp","CPU","DiskRead","DiskWrite","NetworkIn","NetworkOut","MemUsed"]
         if timestampRecorded == False:
@@ -256,34 +265,38 @@ def update_docker():
     global newInstanceAvailable
     global dockers
     dockers = os.listdir("/var/lib/docker/containers")
-    cronfile = open(os.path.join(homepath,datadir+"getmetrics_docker.sh"),'w')
-    cronfile.write("#!/bin/bash\nDATADIR='data/'\ncd $DATADIR\n")
-    cronfile.write("now=$(date +%M)\n")
-    containerCount = 0
-    for container in dockers:
-        if container == "":
-            continue
-        containerCount+=1
-        command = "/usr/local/bin/curl --unix-socket /var/run/docker.sock http://localhost/containers/"+container+"/stats?stream=0 > stat"+container+".txt & PID"+str(containerCount)+"=$!"
-        #command = "echo \"GET /containers/"+container+"/stats?stream=0 HTTP/1.1\\r\\n\" | nc -U -i 5 /var/run/docker.sock > stat"+container+".txt & PID"+str(containerCount)+"=$!"
-        cronfile.write(command+"\n")
-    for i in range(1,containerCount+1):
-        cronfile.write("wait $PID"+str(i)+"\n")
-    cronfile.write("if [ $now -eq \"00\" ] || [ $now -eq \"15\" ] || [ $now -eq \"30\" ] || [ $now -eq \"45\" ];\nthen\n")
-    for container in dockers:
-        if container == "":
-            continue
-        command = "    cat stat"+container+".txt > stat"+container+"_backup.txt\n"
-        cronfile.write(command)
-    cronfile.write("else\n")
-    for container in dockers:
-        if container == "":
-            continue
-        command = "    cat stat"+container+".txt >> stat"+container+"_backup.txt\n"
-        cronfile.write(command)
-    cronfile.write("fi\n")
-    cronfile.close()
-    os.chmod(os.path.join(homepath,datadir+"getmetrics_docker.sh"),0755)
+    
+    try:
+        cronfile = open(os.path.join(homepath,datadir+"getmetrics_docker.sh"),'w')
+        cronfile.write("#!/bin/bash\nDATADIR='data/'\ncd $DATADIR\n")
+        cronfile.write("now=$(date +%M)\n")
+        containerCount = 0
+        for container in dockers:
+            if container == "":
+                continue
+            containerCount+=1
+            command = "/usr/local/bin/curl --unix-socket /var/run/docker.sock http://localhost/containers/"+container+"/stats?stream=0 > stat"+container+".txt & PID"+str(containerCount)+"=$!"
+            #command = "echo \"GET /containers/"+container+"/stats?stream=0 HTTP/1.1\\r\\n\" | nc -U -i 5 /var/run/docker.sock > stat"+container+".txt & PID"+str(containerCount)+"=$!"
+            cronfile.write(command+"\n")
+        for i in range(1,containerCount+1):
+            cronfile.write("wait $PID"+str(i)+"\n")
+        cronfile.write("if [ $now -eq \"00\" ] || [ $now -eq \"15\" ] || [ $now -eq \"30\" ] || [ $now -eq \"45\" ];\nthen\n")
+        for container in dockers:
+            if container == "":
+                continue
+            command = "    cat stat"+container+".txt > stat"+container+"_backup.txt\n"
+            cronfile.write(command)
+        cronfile.write("else\n")
+        for container in dockers:
+            if container == "":
+                continue
+            command = "    cat stat"+container+".txt >> stat"+container+"_backup.txt\n"
+            cronfile.write(command)
+        cronfile.write("fi\n")
+        os.chmod(os.path.join(homepath,datadir+"getmetrics_docker.sh"),0755)
+    finally:
+        cronfile.close()
+        
 
 metricData = {}
 def getmetrics():
@@ -333,11 +346,16 @@ def getmetrics():
                             instances.append(dockers[i])
                             continue
                     else:
-                        statsFile = open(os.path.join(homepath,datadir+filename),'r')
+                        try:
+                            statsFile = open(os.path.join(homepath,datadir+filename),'r')
+                            data = statsFile.readlines()
+                        finally:
+                            statsFile.close()
+                            pass
                 except IOError as e:
                     print "I/O error({0}): {1}: {2}".format(e.errno, e.strerror, e.filename)
                     continue
-                data = statsFile.readlines()
+
                 jsonAvailable = False
                 for eachline in data:
                     if isJson(eachline) == True:
@@ -365,8 +383,13 @@ def getmetrics():
                 configFileName = [fname for fname in os.listdir("/var/lib/docker/containers/"+dockers[i]+"/") if fname.startswith("config")]
                 if os.path.isfile("/var/lib/docker/containers/"+dockers[i]+"/"+configFileName[0]) == False:
                     continue
-                containerConfig = open("/var/lib/docker/containers/"+dockers[i]+"/"+configFileName[0],"r")
-                dataline = containerConfig.readline()
+
+                try:
+                    containerConfig = open("/var/lib/docker/containers/"+dockers[i]+"/"+configFileName[0],"r")
+                    dataline = containerConfig.readline()
+                finally:
+                    containerConfig.close()
+
                 containerName = json.loads(dataline)["Name"]
                 if "insightfinder" in containerName:
                     host = "insightagent"

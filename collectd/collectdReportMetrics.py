@@ -348,6 +348,11 @@ def calculate_avg_cpu_values(all_latest_timestamps, each_file, filenames, new_pr
 
     except IOError:
         print ""
+    finally:
+        csv_file_1.close()
+        csv_file_2.close()
+        csv_file_3.close()
+
     return new_prev_endtime_epoch_l
 
 
@@ -383,6 +388,9 @@ def calculate_disk_load_values(all_latest_timestamps, each_file, filenames, new_
         all_latest_timestamps.append(new_prev_endtime_epoch_l)
     except IOError:
         pass
+    finally:
+        csvfile.close()
+  
     return new_prev_endtime_epoch_l
 
 

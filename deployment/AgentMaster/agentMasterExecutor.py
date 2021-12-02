@@ -138,24 +138,27 @@ def writeInventoryFile():
     global homepath
     global privateKey
     global forceInstall
-    f = open(os.path.join(homepath,"inventory"), 'w')
-    f.write('[nodes]\n')
-    f.write('\n'.join(newInstances))
-    f.write('\n\n[nodes:vars]\n')
-    f.write('ansible_user=%s\n'%userNameHost)
-    if(privateKey == ""):
-        f.write('ansible_ssh_pass=%s\n'%password)
-    else:
-        f.write('ansible_ssh_private_key_file=%s\n'%privateKey)
-    f.write('\n[all:vars]\n')
-    f.write('ifUserName=%s\n'%userInsightfinder)
-    f.write('ifProjectName=%s\n'%projectName)
-    f.write('ifLicenseKey=%s\n'%licenseKey)
-    f.write('ifSamplingInterval=%s\n'%samplingInterval)
-    f.write('ifReportingInterval=%s\n'%reportingInterval)
-    f.write('ifAgent=%s\n'%agentType)
-    f.write('ifReportingUrl=%s\n'%serverUrl)
-    f.close() 
+    
+    try:
+        f = open(os.path.join(homepath,"inventory"), 'w')
+        f.write('[nodes]\n')
+        f.write('\n'.join(newInstances))
+        f.write('\n\n[nodes:vars]\n')
+        f.write('ansible_user=%s\n'%userNameHost)
+        if(privateKey == ""):
+            f.write('ansible_ssh_pass=%s\n'%password)
+        else:
+            f.write('ansible_ssh_private_key_file=%s\n'%privateKey)
+        f.write('\n[all:vars]\n')
+        f.write('ifUserName=%s\n'%userInsightfinder)
+        f.write('ifProjectName=%s\n'%projectName)
+        f.write('ifLicenseKey=%s\n'%licenseKey)
+        f.write('ifSamplingInterval=%s\n'%samplingInterval)
+        f.write('ifReportingInterval=%s\n'%reportingInterval)
+        f.write('ifAgent=%s\n'%agentType)
+        f.write('ifReportingUrl=%s\n'%serverUrl)
+    finally:
+        f.close() 
 
 
 if __name__ == '__main__':

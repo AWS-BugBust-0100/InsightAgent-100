@@ -120,12 +120,14 @@ def update_timestamp(prev_endtime):
         json.dump(config, f)
 
 def getTotalSize(iFile):
-    filejson = open(os.path.join(homepath, iFile))
-    allJsonData = []
-    jsonData = json.load(filejson)
-    for row in jsonData:
-        allJsonData.append(row)
-    filejson.close()
+    try:
+        filejson = open(os.path.join(homepath, iFile))
+        allJsonData = []
+        jsonData = json.load(filejson)
+        for row in jsonData:
+            allJsonData.append(row)
+    finally:
+        filejson.close()
     return len(bytearray(json.dumps(allJsonData)))
 
 def ec2InstanceType():

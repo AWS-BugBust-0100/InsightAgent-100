@@ -17,61 +17,72 @@ def handle_same_format_files(file_paths, out_file_path):
     regex_underscore = regex.compile(r"\_+")
     regex_period = regex.compile(r"\.")
 
-    # get file lines
-    count = -1
-    for count, line in enumerate(open(str(file_paths[0]), 'rU')):
-        pass
-    print 'Rows: {}'.format(count)
-
-    print "Start to merge file {}".format(out_file_path)
     # open files
-    file_list = [open(str(fp), "rb") for fp in file_paths]
-    file_names = map(lambda a: os.path.basename(a.name), file_list)
+    try:
+        # get file lines
+        count = -1
+        try:
+            openFileVar = open(str(file_paths[0]), 'rU')
+            for count, line in enumerate(openFileVar):
+                pass
+        finally:
+            openFileVar.close()
+            pass
+        print 'Rows: {}'.format(count)
 
-    if os.path.exists(out_file_path):
-        os.remove(out_file_path)
-    fout = open(str(out_file_path), "a")
+        print "Start to merge file {}".format(out_file_path)
 
-    # combine headers
-    new_headers = []
-    header_cols = []
-    for index, item in enumerate(file_list):
-        file_name = file_names[index]
-        metric = os.path.splitext(file_name)[0]
-        if '|' not in metric:
-            metric = regex_period.sub('_', regex_underscore.sub('', metric))
-        else:
-            metric = metric.partition('|')
-            metric = regex_period.sub('_', regex_underscore.sub('', '{}.{}'.format(
-                '.'.join(metric[2].split('.')[1:]), metric[0])))
+        file_list = [open(str(fp), "rb") for fp in file_paths]
+        file_names = map(lambda a: os.path.basename(a.name), file_list)
 
-        header = item.readline().replace('\r', '').replace('\n', '')
-        header_cols = map(lambda a: a.replace('"', ''), header.split(',"')[1:])
-        for col in header_cols:
-            new_headers.append(col + ',metric:' + metric)
-    new_headers_str = ',' + ','.join(['"' + item + '"' for item in new_headers]) + '\n'
-    fout.write(new_headers_str)
-    print "Metric files: {}, Instances: {}".format(len(file_list), len(header_cols))
-    print "All columns: {}".format(len(new_headers) + 1)
+        if os.path.exists(out_file_path):
+            os.remove(out_file_path)
+        fout = open(str(out_file_path), "a")
 
-    # combine data
-    num = 0
-    while num < count:
-        data_list_all = [item.readline().replace('\r', '').replace('\n', '').split(',') for item in file_list]
-        data_list = reduce(lambda x, y: x + y[1:], data_list_all)
-        data_str = ','.join(data_list) + '\n'
+        # combine headers
+        new_headers = []
+        header_cols = []
+        for index, item in enumerate(file_list):
+            file_name = file_names[index]
+            metric = os.path.splitext(file_name)[0]
+            if '|' not in metric:
+                metric = regex_period.sub('_', regex_underscore.sub('', metric))
+            else:
+                metric = metric.partition('|')
+                metric = regex_period.sub('_', regex_underscore.sub('', '{}.{}'.format(
+                    '.'.join(metric[2].split('.')[1:]), metric[0])))
 
-        fout.write(data_str)
-        num += 1
-        if num % 10000 == 0:
-            fout.flush()
-            print "Complete {} rows".format(num)
-    print "Complete {} rows".format(num)
+            header = item.readline().replace('\r', '').replace('\n', '')
+            header_cols = map(lambda a: a.replace('"', ''), header.split(',"')[1:])
+            for col in header_cols:
+                new_headers.append(col + ',metric:' + metric)
+        new_headers_str = ',' + ','.join(['"' + item + '"' for item in new_headers]) + '\n'
+        fout.write(new_headers_str)
+        print
+        "Metric files: {}, Instances: {}".format(len(file_list), len(header_cols))
+        print
+        "All columns: {}".format(len(new_headers) + 1)
 
-    # close files
-    fout.close()
-    for item in file_list:
-        item.close()
+        # combine data
+        num = 0
+        while num < count:
+            data_list_all = [item.readline().replace('\r', '').replace('\n', '').split(',') for item in file_list]
+            data_list = reduce(lambda x, y: x + y[1:], data_list_all)
+            data_str = ','.join(data_list) + '\n'
+
+            fout.write(data_str)
+            num += 1
+            if num % 10000 == 0:
+                fout.flush()
+                print "Complete {} rows".format(num)
+        print
+        "Complete {} rows".format(num)
+
+    finally:
+        # close files
+        fout.close()
+        for item in file_list:
+            item.close()
 
 
 def handle_diff_format_files(file_paths, out_file_path, step, memory):
@@ -88,77 +99,83 @@ def handle_diff_format_files(file_paths, out_file_path, step, memory):
 
     if not step or step == '1':
         print "Start to merge file {}".format(merged_file_name)
-        # open files
-        file_list = [open(str(fp), "rb") for fp in file_paths]
-        file_names = map(lambda a: os.path.basename(a.name), file_list)
-        file_header_points = []
-        file_header_cols = []
+        try:
+            # open files
+            file_list = [open(str(fp), "rb") for fp in file_paths]
+            file_names = map(lambda a: os.path.basename(a.name), file_list)
+            file_header_points = []
+            file_header_cols = []
 
-        # merge metric files
-        if os.path.exists(merged_file_name):
-            os.remove(merged_file_name)
-        fout = open(str(merged_file_name), "a")
-        # combine headers
-        new_headers = []
-        header_lens = 0
-        for index, item in enumerate(file_list):
-            file_name = file_names[index]
-            metric = os.path.splitext(file_name)[0]
-            if '|' not in metric:
-                metric = regex_period.sub('_', regex_underscore.sub('', metric))
-            else:
-                metric = metric.partition('|')
-                metric = regex_period.sub('_', regex_underscore.sub('', '{}.{}'.format(
-                    '.'.join(metric[2].split('.')[1:]), metric[0])))
+            # merge metric files
+            if os.path.exists(merged_file_name):
+                os.remove(merged_file_name)
+            fout = open(str(merged_file_name), "a")
+            # combine headers
+            new_headers = []
+            header_lens = 0
+            for index, item in enumerate(file_list):
+                file_name = file_names[index]
+                metric = os.path.splitext(file_name)[0]
+                if '|' not in metric:
+                    metric = regex_period.sub('_', regex_underscore.sub('', metric))
+                else:
+                    metric = metric.partition('|')
+                    metric = regex_period.sub('_', regex_underscore.sub('', '{}.{}'.format(
+                        '.'.join(metric[2].split('.')[1:]), metric[0])))
 
-            header = item.readline().replace('\r', '').replace('\n', '')
-            header_cols = map(lambda a: a.replace('"', ''), header.split(',"')[1:])
-            # set the header cols points
-            file_header_points.append(header_lens)
-            file_header_cols.append(header_cols)
-            header_lens += len(header_cols)
+                header = item.readline().replace('\r', '').replace('\n', '')
+                header_cols = map(lambda a: a.replace('"', ''), header.split(',"')[1:])
+                # set the header cols points
+                file_header_points.append(header_lens)
+                file_header_cols.append(header_cols)
+                header_lens += len(header_cols)
 
-            for col in header_cols:
-                new_headers.append(col + ',metric:' + metric)
-        new_headers_str = ',' + ','.join(['"' + item + '"' for item in new_headers]) + '\n'
-        fout.write(new_headers_str)
-        print "Metric files: {}".format(len(file_list))
-        print "All columns: {}".format(len(new_headers) + 1)
+                for col in header_cols:
+                    new_headers.append(col + ',metric:' + metric)
+            new_headers_str = ',' + ','.join(['"' + item + '"' for item in new_headers]) + '\n'
+            fout.write(new_headers_str)
+            print
+            "Metric files: {}".format(len(file_list))
+            print
+            "All columns: {}".format(len(new_headers) + 1)
 
-        # combine data
-        num = 0
-        for index, item in enumerate(file_list):
-            header_points = file_header_points[index]
-            header_cols = file_header_cols[index]
-            pre_cols = ['' for i in range(0, header_points)]
-            post_cols = ['' for i in range(0, header_lens - header_points - len(header_cols))]
+            # combine data
+            num = 0
+            for index, item in enumerate(file_list):
+                header_points = file_header_points[index]
+                header_cols = file_header_cols[index]
+                pre_cols = ['' for i in range(0, header_points)]
+                post_cols = ['' for i in range(0, header_lens - header_points - len(header_cols))]
 
-            buf_lines = item.readlines(FILE_READ_CHUNK_SIZE)
-            while buf_lines:
-                for line in buf_lines:
-                    cols = line.replace('\r', '').replace('\n', '').split(',')
-                    time_cols = cols[:1]
-                    data_cols = cols[1:]
-                    new_cols = time_cols + pre_cols + data_cols + post_cols
-                    data_str = ','.join(new_cols) + '\n'
-
-                    if len(new_cols) != len(new_headers) + 1:
-                        print "Error merge row {}".format(num)
-                        continue
-
-                    fout.write(data_str)
-                    num += 1
-                    if num % 10000 == 0:
-                        fout.flush()
-                        print "Complete {} rows".format(num)
                 buf_lines = item.readlines(FILE_READ_CHUNK_SIZE)
-        print "Complete {} rows".format(num)
+                while buf_lines:
+                    for line in buf_lines:
+                        cols = line.replace('\r', '').replace('\n', '').split(',')
+                        time_cols = cols[:1]
+                        data_cols = cols[1:]
+                        new_cols = time_cols + pre_cols + data_cols + post_cols
+                        data_str = ','.join(new_cols) + '\n'
 
-        # close files
-        fout.close()
-        for item in file_list:
-            item.close()
-        print "Merged file {}".format(merged_file_name)
+                        if len(new_cols) != len(new_headers) + 1:
+                            print "Error merge row {}".format(num)
+                            continue
+
+                        fout.write(data_str)
+                        num += 1
+                        if num % 10000 == 0:
+                            fout.flush()
+                            print "Complete {} rows".format(num)
+                    buf_lines = item.readlines(FILE_READ_CHUNK_SIZE)
+            print
+            "Complete {} rows".format(num)
+        finally:
+
+            # close files
+            fout.close()
+            for item in file_list:
+                item.close()
+            print
+            "Merged file {}".format(merged_file_name)
 
     if not step or step == '2':
         # sort the big merged metric file by timestamp
@@ -174,65 +191,67 @@ def handle_diff_format_files(file_paths, out_file_path, step, memory):
         else:
             print "Fail sorted file {}".format(sorted_file_name)
 
+
     if not step or step == '3':
         print "Start to combine file {}".format(out_file_path)
         if os.path.exists(out_file_path):
             os.remove(out_file_path)
-        fout = open(str(out_file_path), "a")
-        with open(str(sorted_file_name), "rb") as sorted_file:
-            same_timestamp = None
-            same_timestamp_rows = []
-            same_timestamp_data_map = {}
+        try:
+            fout = open(str(out_file_path), "a")
+            with open(str(sorted_file_name), "rb") as sorted_file:
+                same_timestamp = None
+                same_timestamp_rows = []
+                same_timestamp_data_map = {}
 
-            num = -1
-            row_num = 0
-
-            buf_lines = sorted_file.readlines(FILE_READ_CHUNK_SIZE)
-            while buf_lines:
-                for line in buf_lines:
-                    num += 1
-                    if num == 0:
-                        # write header
-                        fout.write(line)
-                    else:
-                        # write data
-                        cols = line[:-1].split(',')
-                        timestamp = cols[0]
-                        data_cols = cols[1:]
-
-                        if num == 1:
-                            same_timestamp = timestamp
-                            same_timestamp_rows = [data_cols]
-                        else:
-                            if timestamp == same_timestamp:
-                                same_timestamp_rows.append(data_cols)
-                            else:
-                                # combine rows
-                                parse_combine_data(fout, same_timestamp, same_timestamp_rows, same_timestamp_data_map)
-                                row_num += 1
-                                if row_num % 1000 == 0:
-                                    fout.flush()
-                                    print "Complete {} rows".format(row_num)
-
-                                # reset timestamp and data
-                                same_timestamp = timestamp
-                                same_timestamp_rows = [data_cols]
-                                same_timestamp_data_map = {}
+                num = -1
+                row_num = 0
 
                 buf_lines = sorted_file.readlines(FILE_READ_CHUNK_SIZE)
+                while buf_lines:
+                    for line in buf_lines:
+                        num += 1
+                        if num == 0:
+                            # write header
+                            fout.write(line)
+                        else:
+                            # write data
+                            cols = line[:-1].split(',')
+                            timestamp = cols[0]
+                            data_cols = cols[1:]
 
-            # last row
-            if same_timestamp and len(same_timestamp_rows) > 0:
-                # combine rows
-                parse_combine_data(fout, same_timestamp, same_timestamp_rows, same_timestamp_data_map)
-                row_num += 1
+                            if num == 1:
+                                same_timestamp = timestamp
+                                same_timestamp_rows = [data_cols]
+                            else:
+                                if timestamp == same_timestamp:
+                                    same_timestamp_rows.append(data_cols)
+                                else:
+                                    # combine rows
+                                    parse_combine_data(fout, same_timestamp, same_timestamp_rows, same_timestamp_data_map)
+                                    row_num += 1
+                                    if row_num % 1000 == 0:
+                                        fout.flush()
+                                        print "Complete {} rows".format(row_num)
 
-            print "Complete {} rows".format(row_num)
+                                    # reset timestamp and data
+                                    same_timestamp = timestamp
+                                    same_timestamp_rows = [data_cols]
+                                    same_timestamp_data_map = {}
 
-        # close files
-        fout.close()
-        print "Combine file {}".format(out_file_path)
+                    buf_lines = sorted_file.readlines(FILE_READ_CHUNK_SIZE)
 
+                # last row
+                if same_timestamp and len(same_timestamp_rows) > 0:
+                    # combine rows
+                    parse_combine_data(fout, same_timestamp, same_timestamp_rows, same_timestamp_data_map)
+                    row_num += 1
+
+                print "Complete {} rows".format(row_num)
+        finally:
+            # close files
+            fout.close()
+            print
+            "Combine file {}".format(out_file_path)
 
 def parse_combine_data(fout, same_timestamp, same_timestamp_rows, same_timestamp_data_map):
     new_data_cols = []

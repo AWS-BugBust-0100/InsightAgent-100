@@ -280,17 +280,22 @@ def get_component_from_cache(instance):
             return ""
 
 
+       
 def initialize_cache_connection():
     # connect to local cache
     cache_loc = abs_path_from_cur(CACHE_NAME)
-    if os.path.exists(cache_loc):
-        cache_con = sqlite3.connect(cache_loc)
-        cache_cur = cache_con.cursor()
-    else:
-        cache_con = sqlite3.connect(cache_loc)
-        cache_cur = cache_con.cursor()
-        cache_cur.execute(
-            'CREATE TABLE "cache" ( "instance"	TEXT NOT NULL UNIQUE, "alias"	TEXT NOT NULL, "component"	TEXT)')
+    try:
+        if os.path.exists(cache_loc):
+            cache_con = sqlite3.connect(cache_loc)
+            cache_cur = cache_con.cursor()
+        else:
+            cache_con = sqlite3.connect(cache_loc)
+            cache_cur = cache_con.cursor()
+            cache_cur.execute(
+                'CREATE TABLE "cache" ( "instance"	TEXT NOT NULL UNIQUE, "alias"	TEXT NOT NULL, "component"	TEXT)')
+    finally:
+        cache_con.close()
+        cache_cur.close()
 
     return cache_con, cache_cur
 

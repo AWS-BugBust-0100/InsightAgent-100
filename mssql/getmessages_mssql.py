@@ -27,107 +27,132 @@ from optparse import OptionParser
 This script gathers data to send to Insightfinder
 """
 
-
 def start_data_processing(thread_number):
     # open conn
-    conn = pymssql.connect(**agent_config_vars['mssql_kwargs'])
-    cursor = conn.cursor()
-    logger.info('Started connection number ' + str(thread_number))
+    try:
+        conn = pymssql.connect(**agent_config_vars['mssql_kwargs'])
+        cursor = conn.cursor()
+        logger.info('Started connection number ' + str(thread_number))
 
-    sql_str = None
+        sql_str = None
 
-    # get instance and metric mapping info
-    if agent_config_vars['instance_map_conn']:
-        try:
-            logger.info('Starting execute SQL to getting instance mapping info.')
-            sql_str = "select * from {}".format(agent_config_vars['instance_map_conn']['instance_map_table'])
-            logger.debug(sql_str)
-
-            # execute sql string
-            cursor.execute(sql_str)
-
-            instance_map = {}
-            for message in cursor:
-                id_str = str(message[agent_config_vars['instance_map_conn']['instance_map_id_field']])
-                name_str = str(message[agent_config_vars['instance_map_conn']['instance_map_name_field']])
-                instance_map[id_str] = name_str
-            agent_config_vars['instance_map'] = instance_map
-        except ProgrammingError as e:
-            logger.error(e)
-            logger.error('SQL execute error: '.format(sql_str))
-
-    # get table list and filter by whitelist
-    table_list = []
-    if agent_config_vars['table_list'].startswith('sql:'):
-        try:
-            logger.info('Starting execute SQL to getting table info.')
-            sql_str = agent_config_vars['table_list'].split('sql:')[1]
-            logger.debug(sql_str)
-
-            # execute sql string
-            cursor.execute(sql_str)
-
-            for message in cursor:
-                table = str(message['name'])
-                table_list.append(table)
-
-        except ProgrammingError as e:
-            logger.error(e)
-            logger.error('SQL execute error: '.format(sql_str))
-    else:
-        table_list = filter(lambda x: x.strip(), agent_config_vars['table_list'].split(','))
-
-    if agent_config_vars['table_whitelist']:
-        try:
-            db_regex = regex.compile(agent_config_vars['table_whitelist'])
-            table_list = list(filter(db_regex.match, table_list))
-        except Exception as e:
-            logger.error(e)
-    if len(table_list) == 0:
-        logger.error('Table list is empty')
-        sys.exit(1)
-
-    # get device mapping info for different device field
-    if agent_config_vars['device_map_conn']:
-        agent_config_vars['device_map'] = {}
-        for field, map_info in agent_config_vars['device_map_conn'].items():
+        # get instance and metric mapping info
+        if agent_config_vars['instance_map_conn']:
             try:
-                logger.info('Starting execute SQL to getting device mapping info: {}.'.format(field))
-                sql_str = "select * from {}".format(map_info['device_map_table'])
+                logger.info('Starting execute SQL to getting instance mapping info.')
+                sql_str = "select * from {}".format(agent_config_vars['instance_map_conn']['instance_map_table'])
                 logger.debug(sql_str)
 
                 # execute sql string
                 cursor.execute(sql_str)
 
-                device_map = {}
+                instance_map = {}
                 for message in cursor:
-                    id_str = str(message[map_info['device_map_id_field']])
-                    name_str = str(message[map_info['device_map_name_field']])
-                    device_map[id_str] = name_str
-                agent_config_vars['device_map'][field] = device_map
+                    id_str = str(message[agent_config_vars['instance_map_conn']['instance_map_id_field']])
+                    name_str = str(message[agent_config_vars['instance_map_conn']['instance_map_name_field']])
+                    instance_map[id_str] = name_str
+                agent_config_vars['instance_map'] = instance_map
             except ProgrammingError as e:
                 logger.error(e)
                 logger.error('SQL execute error: '.format(sql_str))
 
-    # get sql string
-    sql = agent_config_vars['sql']
-    sql = sql.replace('\n', ' ').replace('"""', '')
+        # get table list and filter by whitelist
+        table_list = []
+        if agent_config_vars['table_list'].startswith('sql:'):
+            try:
+                logger.info('Starting execute SQL to getting table info.')
+                sql_str = agent_config_vars['table_list'].split('sql:')[1]
+                logger.debug(sql_str)
 
-    # parse sql string by params
-    logger.debug('sql config: {}'.format(agent_config_vars['sql_config']))
-    if agent_config_vars['sql_config']:
-        logger.debug('Using time range for replay data')
-        for timestamp in range(agent_config_vars['sql_config']['sql_time_range'][0],
-                               agent_config_vars['sql_config']['sql_time_range'][1],
-                               agent_config_vars['sql_config']['sql_time_interval']):
+                # execute sql string
+                cursor.execute(sql_str)
+
+                for message in cursor:
+                    table = str(message['name'])
+                    table_list.append(table)
+
+            except ProgrammingError as e:
+                logger.error(e)
+                logger.error('SQL execute error: '.format(sql_str))
+        else:
+            table_list = filter(lambda x: x.strip(), agent_config_vars['table_list'].split(','))
+
+        if agent_config_vars['table_whitelist']:
+            try:
+                db_regex = regex.compile(agent_config_vars['table_whitelist'])
+                table_list = list(filter(db_regex.match, table_list))
+            except Exception as e:
+                logger.error(e)
+        if len(table_list) == 0:
+            logger.error('Table list is empty')
+            sys.exit(1)
+
+        # get device mapping info for different device field
+        if agent_config_vars['device_map_conn']:
+            agent_config_vars['device_map'] = {}
+            for field, map_info in agent_config_vars['device_map_conn'].items():
+                try:
+                    logger.info('Starting execute SQL to getting device mapping info: {}.'.format(field))
+                    sql_str = "select * from {}".format(map_info['device_map_table'])
+                    logger.debug(sql_str)
+
+                    # execute sql string
+                    cursor.execute(sql_str)
+
+                    device_map = {}
+                    for message in cursor:
+                        id_str = str(message[map_info['device_map_id_field']])
+                        name_str = str(message[map_info['device_map_name_field']])
+                        device_map[id_str] = name_str
+                    agent_config_vars['device_map'][field] = device_map
+                except ProgrammingError as e:
+                    logger.error(e)
+                    logger.error('SQL execute error: '.format(sql_str))
+
+        # get sql string
+        sql = agent_config_vars['sql']
+        sql = sql.replace('\n', ' ').replace('"""', '')
+
+        # parse sql string by params
+        logger.debug('sql config: {}'.format(agent_config_vars['sql_config']))
+        if agent_config_vars['sql_config']:
+            logger.debug('Using time range for replay data')
+            for timestamp in range(agent_config_vars['sql_config']['sql_time_range'][0],
+                                   agent_config_vars['sql_config']['sql_time_range'][1],
+                                   agent_config_vars['sql_config']['sql_time_interval']):
+                for table in table_list:
+                    sql_str = sql
+                    start_time = arrow.get(timestamp).format(agent_config_vars['sql_time_format'])
+                    end_time = arrow.get(timestamp + agent_config_vars['sql_config']['sql_time_interval']).format(
+                        agent_config_vars['sql_time_format'])
+                    extract_time = arrow.get(
+                        timestamp + agent_config_vars['sql_config']['sql_time_interval'] + agent_config_vars[
+                            'sql_extract_time_offset']).format(agent_config_vars['sql_extract_time_format'])
+
+                    sql_str = sql_str.replace('{{table}}', table)
+                    sql_str = sql_str.replace('{{extract_time}}', extract_time)
+                    sql_str = sql_str.replace('{{start_time}}', start_time)
+                    sql_str = sql_str.replace('{{end_time}}', end_time)
+
+                    query_messages_mssql(cursor, sql_str)
+
+                # clear metric buffer when piece of time range end
+                clear_metric_buffer()
+        else:
+            logger.debug('Using current time for streaming data')
             for table in table_list:
                 sql_str = sql
-                start_time = arrow.get(timestamp).format(agent_config_vars['sql_time_format'])
-                end_time = arrow.get(timestamp + agent_config_vars['sql_config']['sql_time_interval']).format(
+                start_time_multiple = agent_config_vars['start_time_multiple'] or 1
+                start_time = arrow.get(
+                    arrow.utcnow().float_timestamp - start_time_multiple * if_config_vars['sampling_interval'],
+                    tzinfo=agent_config_vars['timezone'].zone).format(
+                    agent_config_vars['sql_time_format'])
+                end_time = arrow.get(arrow.utcnow().float_timestamp, tzinfo=agent_config_vars['timezone'].zone).format(
                     agent_config_vars['sql_time_format'])
                 extract_time = arrow.get(
-                    timestamp + agent_config_vars['sql_config']['sql_time_interval'] + agent_config_vars[
-                        'sql_extract_time_offset']).format(agent_config_vars['sql_extract_time_format'])
+                    arrow.utcnow().float_timestamp + agent_config_vars['sql_extract_time_offset'],
+                    tzinfo=agent_config_vars['timezone'].zone).format(
+                    agent_config_vars['sql_extract_time_format'])
 
                 sql_str = sql_str.replace('{{table}}', table)
                 sql_str = sql_str.replace('{{extract_time}}', extract_time)
@@ -135,35 +160,14 @@ def start_data_processing(thread_number):
                 sql_str = sql_str.replace('{{end_time}}', end_time)
 
                 query_messages_mssql(cursor, sql_str)
+    finally:
+        cursor.close()
+        conn.close()
+        logger.info('Closed connection number ' + str(thread_number))
+        pass
 
-            # clear metric buffer when piece of time range end
-            clear_metric_buffer()
-    else:
-        logger.debug('Using current time for streaming data')
-        for table in table_list:
-            sql_str = sql
-            start_time_multiple = agent_config_vars['start_time_multiple'] or 1
-            start_time = arrow.get(
-                arrow.utcnow().float_timestamp - start_time_multiple * if_config_vars['sampling_interval'],
-                tzinfo=agent_config_vars['timezone'].zone).format(
-                agent_config_vars['sql_time_format'])
-            end_time = arrow.get(arrow.utcnow().float_timestamp, tzinfo=agent_config_vars['timezone'].zone).format(
-                agent_config_vars['sql_time_format'])
-            extract_time = arrow.get(
-                arrow.utcnow().float_timestamp + agent_config_vars['sql_extract_time_offset'],
-                tzinfo=agent_config_vars['timezone'].zone).format(
-                agent_config_vars['sql_extract_time_format'])
 
-            sql_str = sql_str.replace('{{table}}', table)
-            sql_str = sql_str.replace('{{extract_time}}', extract_time)
-            sql_str = sql_str.replace('{{start_time}}', start_time)
-            sql_str = sql_str.replace('{{end_time}}', end_time)
-
-            query_messages_mssql(cursor, sql_str)
-
-    cursor.close()
-    conn.close()
-    logger.info('Closed connection number ' + str(thread_number))
+    
 
 
 def query_messages_mssql(cursor, sql_str):

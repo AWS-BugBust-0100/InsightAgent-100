@@ -29,42 +29,47 @@ def handle_csv_filter(in_file_path, time_range):
     timestamp_range.reverse()
 
     out_path = os.path.join(in_dir, 'time_filter.csv')
-    output_file = open(str(out_path), "a")
-    num = 0
-    filter_num = 0
-    [time_start, time_end] = timestamp_range.pop()
-    with open(str(in_file_path), "rb") as _file:
-        output_header = _file.readline()
-        output_file.write(output_header)
-        num += 1
-        buf_lines = _file.readlines(FILE_READ_CHUNK_SIZE)
-        while buf_lines:
-
-            for line in buf_lines:
-                timestamp = int(line[:10])
-
-                if time_start <= timestamp <= time_end:
-                    output_file.write(line)
-
-                    filter_num += 1
-                    if filter_num % 1000 == 0:
-                        output_file.flush()
-                        print "Complete {} rows".format(filter_num)
-
-                elif timestamp > last_time:
-                    print "Complete {} rows".format(filter_num)
-                    return
-
-                elif timestamp > time_end and len(timestamp_range) > 0:
-                    [time_start, time_end] = timestamp_range.pop()
-
-                num += 1
-                if num % 1000 == 0:
-                    output_file.flush()
-                    print "Read {} rows".format(num)
-
+    try:
+        output_file = open(str(out_path), "a")
+        num = 0
+        filter_num = 0
+        [time_start, time_end] = timestamp_range.pop()
+        with open(str(in_file_path), "rb") as _file:
+            output_header = _file.readline()
+            output_file.write(output_header)
+            num += 1
             buf_lines = _file.readlines(FILE_READ_CHUNK_SIZE)
+            while buf_lines:
 
+                for line in buf_lines:
+                    timestamp = int(line[:10])
+
+                    if time_start <= timestamp <= time_end:
+                        output_file.write(line)
+
+                        filter_num += 1
+                        if filter_num % 1000 == 0:
+                            output_file.flush()
+                            print
+                            "Complete {} rows".format(filter_num)
+
+                    elif timestamp > last_time:
+                        print
+                        "Complete {} rows".format(filter_num)
+                        return
+
+                    elif timestamp > time_end and len(timestamp_range) > 0:
+                        [time_start, time_end] = timestamp_range.pop()
+
+                    num += 1
+                    if num % 1000 == 0:
+                        output_file.flush()
+                        print
+                        "Read {} rows".format(num)
+
+                buf_lines = _file.readlines(FILE_READ_CHUNK_SIZE)
+    finally:
+        output_file.close()
 
 def handle_csv_split(in_file_path):
     in_dir = os.path.dirname(in_file_path)
@@ -73,43 +78,48 @@ def handle_csv_split(in_file_path):
     file_day = None
     output_file = None
     num = 0
-    with open(str(in_file_path), "rb") as _file:
-        output_header = _file.readline()
-        num += 1
-        buf_lines = _file.readlines(FILE_READ_CHUNK_SIZE)
-        while buf_lines:
-
-            for line in buf_lines:
-                timestamp = line[:10]
-                day = arrow.get(int(timestamp)).format('YYYY-MM-DD')
-
-                if day != file_day:
-                    file_day = day
-                    folder = os.path.join(in_dir, 'output-' + file_day)
-                    file_name = file_day + '.csv'
-                    if output_file:
-                        print 'Output is done'
-                        output_file.close()
-
-                    mkdir(folder)
-
-                    print 'Output start to write: ' + file_name
-                    out_path = os.path.join(folder, file_name)
-                    output_file = open(str(out_path), "a")
-                    output_file.write(output_header)
-                    output_file.write(line)
-
-                else:
-                    output_file.write(line)
-
-                num += 1
-                if num % 1000 == 0:
-                    output_file.flush()
-                    print "Complete {} rows".format(num)
-
+    try:
+        with open(str(in_file_path), "rb") as _file:
+            output_header = _file.readline()
+            num += 1
             buf_lines = _file.readlines(FILE_READ_CHUNK_SIZE)
+            while buf_lines:
+    
+                for line in buf_lines:
+                    timestamp = line[:10]
+                    day = arrow.get(int(timestamp)).format('YYYY-MM-DD')
+    
+                    if day != file_day:
+                        file_day = day
+                        folder = os.path.join(in_dir, 'output-' + file_day)
+                        file_name = file_day + '.csv'
+                        if output_file:
+                            print 'Output is done'
+                            output_file.close()
+    
+                        mkdir(folder)
+    
+                        print 'Output start to write: ' + file_name
+                        out_path = os.path.join(folder, file_name)
+                        output_file = open(str(out_path), "a")
+                        output_file.write(output_header)
+                        output_file.write(line)
+    
+                    else:
+                        output_file.write(line)
+    
+                    num += 1
+                    if num % 1000 == 0:
+                        output_file.flush()
+                        print "Complete {} rows".format(num)
+    
+                buf_lines = _file.readlines(FILE_READ_CHUNK_SIZE)
 
-    print "Complete {} rows".format(num)
+        print
+        "Complete {} rows".format(num)
+    finally:
+        output_file.close()
+
 
 
 def main():

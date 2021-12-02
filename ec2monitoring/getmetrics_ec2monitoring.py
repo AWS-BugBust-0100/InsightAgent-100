@@ -62,19 +62,23 @@ def init_previous_results():
         if(eachfile == "cpumetrics.txt"):
             get_cpuusage(eachfile, tokens, first_result)
         else:
-            txt_file = open(os.path.join(homepath,datadir,eachfile))
-            lines = txt_file.read().split("\n")
-            for eachline in lines:
-                tokens = eachline.split("=")
-                if(len(tokens) == 1):
-                    continue
-                if(eachfile == "diskmetrics.txt"):
-                    tokens[1] = float(float(tokens[1])*512/(1024*1024))
-                elif(eachfile == "diskusedmetrics.txt" or eachfile == "memmetrics.txt"):
-                    tokens[1] = float(float(tokens[1])/1024)
-                elif(eachfile == "networkmetrics.txt"):
-                    tokens[1] = float(float(tokens[1])/(1024*1024))
-                first_result[tokens[0]] = float(tokens[1])
+            try:
+                txt_file = open(os.path.join(homepath,datadir,eachfile))
+                lines = txt_file.read().split("\n")
+                for eachline in lines:
+                    tokens = eachline.split("=")
+                    if(len(tokens) == 1):
+                        continue
+                    if(eachfile == "diskmetrics.txt"):
+                        tokens[1] = float(float(tokens[1])*512/(1024*1024))
+                    elif(eachfile == "diskusedmetrics.txt" or eachfile == "memmetrics.txt"):
+                        tokens[1] = float(float(tokens[1])/1024)
+                    elif(eachfile == "networkmetrics.txt"):
+                        tokens[1] = float(float(tokens[1])/(1024*1024))
+                    first_result[tokens[0]] = float(tokens[1])
+            finally:
+                txt_file.close()
+                pass
     update_results(first_result)
     time.sleep(1)
     proc = subprocess.Popen([os.path.join(homepath,"proc","getmetrics.sh")], cwd=homepath, stdout=subprocess.PIPE, shell=True)
@@ -121,32 +125,36 @@ def calculate_cpudelta(current_result):
     return totalresult
 
 def get_cpuusage(filename,field_values,which_dict):
-    cpuusage_file = open(os.path.join(homepath,datadir,filename))
-    lines = cpuusage_file.read().split("\n")
-    cpu_dict={}
-    cpu_count = multiprocessing.cpu_count()
-    for i in range(0,cpu_count):
-        cpucore = "cpu"+str(i)
-        cpu_dict[cpucore] = {}
-    for eachline in lines:
-        tokens_split = eachline.split("=")
-        if(len(tokens_split) == 1):
-            continue
-        cpucoresplit = tokens_split[0].split("$")
-        cpu_dict[cpucoresplit[0]][cpucoresplit[1]] = float(tokens_split[1])
-    totalresult = 0
-    for i in range(0,cpu_count):
-        cpucore = "cpu"+str(i)
-        which_dict["cpu_usage"] = cpu_dict
-        Total = cpu_dict[cpucore]["user"] + cpu_dict[cpucore]["nice"] + cpu_dict[cpucore]["system"] + cpu_dict[cpucore]["idle"] + cpu_dict[cpucore]["iowait"] + cpu_dict[cpucore]["irq"] + cpu_dict[cpucore]["softirq"]
-        idle = cpu_dict[cpucore]["idle"] + cpu_dict[cpucore]["iowait"]
-        field_values[0] = "CPU"
-        result = 1 - round(float(idle/Total),4)
-        totalresult += float(result)
-    field_values.append(totalresult*100)
+    try:
+        cpuusage_file = open(os.path.join(homepath,datadir,filename))
+        lines = cpuusage_file.read().split("\n")
+        cpu_dict={}
+        cpu_count = multiprocessing.cpu_count()
+        for i in range(0,cpu_count):
+            cpucore = "cpu"+str(i)
+            cpu_dict[cpucore] = {}
+        for eachline in lines:
+            tokens_split = eachline.split("=")
+            if(len(tokens_split) == 1):
+                continue
+            cpucoresplit = tokens_split[0].split("$")
+            cpu_dict[cpucoresplit[0]][cpucoresplit[1]] = float(tokens_split[1])
+        totalresult = 0
+        for i in range(0,cpu_count):
+            cpucore = "cpu"+str(i)
+            which_dict["cpu_usage"] = cpu_dict
+            Total = cpu_dict[cpucore]["user"] + cpu_dict[cpucore]["nice"] + cpu_dict[cpucore]["system"] + cpu_dict[cpucore]["idle"] + cpu_dict[cpucore]["iowait"] + cpu_dict[cpucore]["irq"] + cpu_dict[cpucore]["softirq"]
+            idle = cpu_dict[cpucore]["idle"] + cpu_dict[cpucore]["iowait"]
+            field_values[0] = "CPU"
+            result = 1 - round(float(idle/Total),4)
+            totalresult += float(result)
+        field_values.append(totalresult*100)
+    finally:
+        cpuusage_file.close()
 
 filenames = ["timestamp.txt", "cpumetrics.txt","diskmetrics.txt","diskusedmetrics.txt","networkmetrics.txt","memmetrics.txt","loadavg.txt"]
 fields = []
+
 try:
     date = time.strftime("%Y%m%d")
     resource_usage_file = open(os.path.join(homepath,datadir+date+".csv"),'a+')
@@ -217,8 +225,10 @@ try:
             listtocsv(fields)
     listtocsv(values)
     resource_usage_file.flush()
-    resource_usage_file.close()
     update_results(dict)
 except KeyboardInterrupt:
     print "Interrupt from keyboard"
+finally:
+    resource_usage_file.close()
+    
 

@@ -29,110 +29,113 @@ def start_data_processing():
     logger.info('Started......')
 
     # build ThreadPool
-    pool_map = ThreadPool(agent_config_vars['thread_pool'])
+    try:
+        pool_map = ThreadPool(agent_config_vars['thread_pool'])
 
-    # build request headers
-    api_key = agent_config_vars['api_key']
-    headers = {
-        "Accept": "application/json",
-        "Authorization": "ExtraHop apikey=" + api_key
-    }
+        # build request headers
+        api_key = agent_config_vars['api_key']
+        headers = {
+            "Accept": "application/json",
+            "Authorization": "ExtraHop apikey=" + api_key
+        }
 
-    metric_query_params = agent_config_vars['metric_query_params']
-    device_ip_list = agent_config_vars['device_ip_list'] or []
+        metric_query_params = agent_config_vars['metric_query_params']
+        device_ip_list = agent_config_vars['device_ip_list'] or []
 
-    # merge all device ip list
-    for param in metric_query_params:
-        ips = param.get('device_ip_list') or []
-        device_ip_list.extend(ips)
-    device_ip_list = list(set(device_ip_list))
+        # merge all device ip list
+        for param in metric_query_params:
+            ips = param.get('device_ip_list') or []
+            device_ip_list.extend(ips)
+        device_ip_list = list(set(device_ip_list))
 
-    # get devices list and id maps
-    devices_ids = []
-    devices_ids_map = {}
-    devices_ips_map = {}
-    url = urllib.parse.urljoin(agent_config_vars['host'], '/api/v1/devices')
-    result_list = []
-    if device_ip_list:
-        def query_devices(args):
-            ip, params = args
-            logger.debug('Starting query device ip: {}'.format(ip))
-            data = []
+        # get devices list and id maps
+        devices_ids = []
+        devices_ids_map = {}
+        devices_ips_map = {}
+        url = urllib.parse.urljoin(agent_config_vars['host'], '/api/v1/devices')
+        result_list = []
+        if device_ip_list:
+            def query_devices(args):
+                ip, params = args
+                logger.debug('Starting query device ip: {}'.format(ip))
+                data = []
+                try:
+                    # execute sql string
+                    response = send_request(url, headers=headers, params=params, verify=False,
+                                            proxies=agent_config_vars['proxies'])
+                    if response != -1:
+                        result = response.json()
+                        data = result or []
+                except Exception as e:
+                    logger.error(e)
+                    logger.error('Query device error: ' + ip)
+                return data
+
+            params_list = [(ip, {
+                "search_type": 'ip address',
+                "value": ip
+            }) for ip in device_ip_list]
+            results = pool_map.map(query_devices, params_list)
+            result_list = list(chain(*results))
+        else:
+            params = {
+                "search_type": 'any',
+            }
             try:
                 # execute sql string
                 response = send_request(url, headers=headers, params=params, verify=False,
                                         proxies=agent_config_vars['proxies'])
                 if response != -1:
                     result = response.json()
-                    data = result or []
+                    result_list = result or []
             except Exception as e:
                 logger.error(e)
-                logger.error('Query device error: ' + ip)
-            return data
+                logger.error('Query device list error')
 
-        params_list = [(ip, {
-            "search_type": 'ip address',
-            "value": ip
-        }) for ip in device_ip_list]
-        results = pool_map.map(query_devices, params_list)
-        result_list = list(chain(*results))
-    else:
-        params = {
-            "search_type": 'any',
-        }
-        try:
-            # execute sql string
-            response = send_request(url, headers=headers, params=params, verify=False,
-                                    proxies=agent_config_vars['proxies'])
-            if response != -1:
-                result = response.json()
-                result_list = result or []
-        except Exception as e:
-            logger.error(e)
-            logger.error('Query device list error')
+        # parse device list
+        for device in result_list:
+            device_id = device['id']
+            devices_ids.append(device_id)
+            devices_ids_map[device_id] = device['ipaddr4']
+            devices_ips_map[device['ipaddr4']] = device_id
 
-    # parse device list
-    for device in result_list:
-        device_id = device['id']
-        devices_ids.append(device_id)
-        devices_ids_map[device_id] = device['ipaddr4']
-        devices_ips_map[device['ipaddr4']] = device_id
+        # filter devices ids
+        if len(devices_ids) == 0:
+            logger.error('Devices list is empty')
+            sys.exit(1)
 
-    # filter devices ids
-    if len(devices_ids) == 0:
-        logger.error('Devices list is empty')
-        sys.exit(1)
+        # parse sql string by params
+        logger.debug('history range config: {}'.format(agent_config_vars['his_time_range']))
+        if agent_config_vars['his_time_range']:
+            logger.debug('Using time range for replay data')
+            for timestamp in range(agent_config_vars['his_time_range'][0],
+                                   agent_config_vars['his_time_range'][1],
+                                   if_config_vars['sampling_interval']):
+                start_time = timestamp
+                end_time = timestamp + if_config_vars['sampling_interval']
 
-    # parse sql string by params
-    logger.debug('history range config: {}'.format(agent_config_vars['his_time_range']))
-    if agent_config_vars['his_time_range']:
-        logger.debug('Using time range for replay data')
-        for timestamp in range(agent_config_vars['his_time_range'][0],
-                               agent_config_vars['his_time_range'][1],
-                               if_config_vars['sampling_interval']):
-            start_time = timestamp
-            end_time = timestamp + if_config_vars['sampling_interval']
+                params = build_query_params(headers, devices_ips_map, devices_ids, metric_query_params, start_time,
+                                            end_time)
+                results = pool_map.map(query_messages_extrahop, params)
+                result_list = list(chain(*results))
+                parse_messages_extrahop(result_list, devices_ids_map)
 
-            params = build_query_params(headers, devices_ips_map, devices_ids, metric_query_params, start_time,
-                                        end_time)
+                # clear metric buffer when piece of time range end
+                clear_metric_buffer()
+        else:
+            logger.debug('Using current time for streaming data')
+            time_now = int(arrow.utcnow().float_timestamp)
+            start_time = time_now - if_config_vars['sampling_interval']
+            end_time = time_now
+
+            params = build_query_params(headers, devices_ips_map, devices_ids, metric_query_params, start_time, end_time)
             results = pool_map.map(query_messages_extrahop, params)
             result_list = list(chain(*results))
             parse_messages_extrahop(result_list, devices_ids_map)
 
-            # clear metric buffer when piece of time range end
-            clear_metric_buffer()
-    else:
-        logger.debug('Using current time for streaming data')
-        time_now = int(arrow.utcnow().float_timestamp)
-        start_time = time_now - if_config_vars['sampling_interval']
-        end_time = time_now
-
-        params = build_query_params(headers, devices_ips_map, devices_ids, metric_query_params, start_time, end_time)
-        results = pool_map.map(query_messages_extrahop, params)
-        result_list = list(chain(*results))
-        parse_messages_extrahop(result_list, devices_ids_map)
-
-    logger.info('Closed......')
+        logger.info('Closed......')
+    finally:
+        pool_map.close()
 
 
 def build_query_params(headers, devices_ips_map, devices_ids, metric_query_params, start_time, end_time):

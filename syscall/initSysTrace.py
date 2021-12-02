@@ -35,7 +35,11 @@ class SysTraceThreads(threading.Thread):
 def updateFile(filepath, filename, newSession):
     global homepath
     file = os.path.join(homepath,filepath,filename)
-    open(os.path.join(file), 'a+').writelines(newSession+"\n")
+    try:
+        returnObject = open(os.path.join(file), 'a+').writelines(newSession+"\n")
+    finally:
+        returnObject.close()
+    
     
 def deleteFile(filepath, filename):
     global homepath

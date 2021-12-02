@@ -45,7 +45,6 @@ def sshInstall(retry,hostname):
         stdin.write(password+'\n')
         stdin.flush()
         session.recv_exit_status() #wait for exec_command to finish
-        s.close()
         print "Install Succeed in", hostname
         q.task_done()
         return
@@ -60,6 +59,9 @@ def sshInstall(retry,hostname):
         return sshInstall(retry-1,hostname)
     except:
         print "Unexpected error in %s:"%hostname
+    finally:
+        s.close()
+
 
 def sshInstallHypervisor(retry,hostname):
     global user
@@ -74,6 +76,7 @@ def sshInstallHypervisor(retry,hostname):
         q.task_done()
         return
     print "Start installing agent in", hostname, "..."
+
     try:
         s = paramiko.SSHClient()
         s.set_missing_host_key_policy(paramiko.AutoAddPolicy())
@@ -119,6 +122,8 @@ def sshInstallHypervisor(retry,hostname):
     except:
         print "Unexpected error in %s:"%hostname
         return sshInstallHypervisor(retry-1,hostname)
+    finally:
+        s.close()
 
 def get_args():
     parser = argparse.ArgumentParser(

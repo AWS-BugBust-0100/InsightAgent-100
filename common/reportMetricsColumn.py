@@ -117,12 +117,14 @@ def update_timestamp(prev_endtime):
         json.dump(config, f)
 
 def getTotalSize(iFile):
-    filejson = open(os.path.join(homepath, iFile))
-    allJsonData = []
-    jsonData = json.load(filejson)
-    for row in jsonData:
-        allJsonData.append(row)
-    filejson.close()
+    try:
+        filejson = open(os.path.join(homepath, iFile))
+        allJsonData = []
+        jsonData = json.load(filejson)
+        for row in jsonData:
+            allJsonData.append(row)
+    finally:
+        filejson.close()
     return len(bytearray(json.dumps(allJsonData)))
 
 def ec2InstanceType():
@@ -210,10 +212,14 @@ def sendData(fileID):
     json_data = json.dumps(alldata)
     #print json_data
     url = serverUrl + "/customprojectrawdata"
-    if agentType == "hypervisor":
-        response = urllib.urlopen(url, data=urllib.urlencode(alldata))
-    else:
-        response = requests.post(url, data=json.loads(json_data))
+
+    try:
+        if agentType == "hypervisor":
+            response = urllib.urlopen(url, data=urllib.urlencode(alldata))
+        else:
+            response = requests.post(url, data=json.loads(json_data))
+    finally:
+        response.close()
 
 def groupByTimestamp(fileReader):
     global reportedDataSize
@@ -452,7 +458,7 @@ if options.inputFile is None:
         new_prev_endtimeinsec = math.ceil(long(new_prev_endtime_epoch)/1000.0)
         new_prev_endtime = time.strftime("%Y%m%d%H%M%S", time.localtime(long(new_prev_endtimeinsec)))
         update_timestamp(new_prev_endtime)
-        sendData(hashlib.md5(os.path.join(homepath, datadir + date + fileadd + ".csv")).hexdigest())
+        sendData(hashlib.sha256(os.path.join(homepath, datadir + date + fileadd + ".csv")).hexdigest())
 else:
     if os.path.isfile(os.path.join(homepath,options.inputFile)):
         numlines = len(open(os.path.join(homepath,options.inputFile)).readlines())
