@@ -382,9 +382,9 @@ def calculate_disk_load_values(all_latest_timestamps, each_file, filenames, new_
                     raw_data_l[timestamp_str] = value_list
         all_latest_timestamps.append(new_prev_endtime_epoch_l)
     except IOError:
-
+        pass
     finally:
-    csvfile.close()
+        csvfile.close()
   
     return new_prev_endtime_epoch_l
 
