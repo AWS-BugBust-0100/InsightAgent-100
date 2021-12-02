@@ -28,15 +28,19 @@ This script gathers data to send to Insightfinder
 
 def start_data_processing(thread_number):
     # open consumer
-    consumer = KafkaConsumer(**agent_config_vars['kafka_kwargs'])
-    logger.info('Started consumer number ' + str(thread_number))
-    # subscribe to given topics
-    consumer.subscribe(agent_config_vars['topics'])
-    logger.info('Successfully subscribed to topics' + str(agent_config_vars['topics']))
-    # start consuming messages
-    parse_messages_kafka(consumer)
-    consumer.close()
-    logger.info('Closed consumer number ' + str(thread_number))
+    try:
+        consumer = KafkaConsumer(**agent_config_vars['kafka_kwargs'])
+        logger.info('Started consumer number ' + str(thread_number))
+        # subscribe to given topics
+        consumer.subscribe(agent_config_vars['topics'])
+        logger.info('Successfully subscribed to topics' + str(agent_config_vars['topics']))
+        # start consuming messages
+        parse_messages_kafka(consumer)
+        
+    finally:
+        consumer.close()
+        logger.info('Closed consumer number ' + str(thread_number))
+
 
 
 def parse_messages_kafka(consumer):
