@@ -71,6 +71,7 @@ def handle_same_format_files(file_paths, out_file_path):
                 print "Complete {} rows".format(num)
         print
         "Complete {} rows".format(num)
+
     finally:
         # close files
         fout.close()
