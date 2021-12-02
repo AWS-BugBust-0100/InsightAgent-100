@@ -33,6 +33,7 @@ def initialize_cache_connection():
     # connect to local cache
     cache_loc = abs_path_from_cur(CACHE_NAME)
 
+
     try:
         if os.path.exists(cache_loc): 
             cache_con = sqlite3.connect(cache_loc)
