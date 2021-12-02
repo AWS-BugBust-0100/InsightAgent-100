@@ -245,6 +245,7 @@ def query_messages_mariadb(args):
     sql_str = sql_str.replace('{{end_time}}', end_time)
 
     message_list = []
+
     try:
         logger.info('Starting execute SQL')
         logger.info(sql_str)
