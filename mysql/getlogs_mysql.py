@@ -67,6 +67,8 @@ def connect_to_database(host, database, user, password):
             return connection
     except Error as e:
         print ("Error while connecting to MySQL", e)
+    finally:
+        connection.close()
 
 
 '''
