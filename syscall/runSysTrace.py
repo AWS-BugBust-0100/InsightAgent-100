@@ -37,26 +37,30 @@ def updateFile(filepath, filename, newSession):
     file = os.path.join(homepath,filepath,filename)
     oldSession = "null"
     currentSession = "null"
-    if (os.stat(file).st_size == 0):
-        open(os.path.join(file), 'a+').writelines(newSession+"\n")
-    else:
-        lines = open(file).readlines()
-        if len(lines) == 1:
-            currentSession = lines[0].rstrip('\n')
-            lines.append(newSession+'\n')
-            try:
-                conn2 = open(os.path.join(file), 'w+').writelines(lines[0:])
-            finally:
-                conn2.close()
-                pass
+    try:
+        if (os.stat(file).st_size == 0):
+            fo = open(os.path.join(file), 'a+').writelines(newSession+"\n")
         else:
-            lines.append(newSession+'\n')
-            oldSession = lines[0].rstrip('\n')
-            currentSession = lines[1].rstrip('\n')
-            try:
-                conn = open(os.path.join(file), 'w+').writelines(lines[1:])
-            finally:
-                conn.close()
+            lines = open(file).readlines()
+            if len(lines) == 1:
+                currentSession = lines[0].rstrip('\n')
+                lines.append(newSession+'\n')
+                try:
+                    conn2 = open(os.path.join(file), 'w+').writelines(lines[0:])
+                finally:
+                    conn2.close()
+                    pass
+            else:
+                lines.append(newSession+'\n')
+                oldSession = lines[0].rstrip('\n')
+                currentSession = lines[1].rstrip('\n')
+                try:
+                    conn = open(os.path.join(file), 'w+').writelines(lines[1:])
+                finally:
+                    conn.close()
+    finally:
+        fo.close()
+
     return oldSession, currentSession
 
 def main():
