@@ -753,7 +753,7 @@ def clear_log_buffer():
             send_data_wrapper()
 
     # last chunk
-    if len(track['current_row']) > 0:
+    if track['current_row']:
         logger.debug('Sending last chunk')
         send_data_wrapper()
 
