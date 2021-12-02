@@ -185,6 +185,7 @@ def handle_diff_format_files(file_paths, out_file_path, step, memory):
         else:
             print "Fail sorted file {}".format(sorted_file_name)
 
+
     if not step or step == '3':
         print "Start to combine file {}".format(out_file_path)
         if os.path.exists(out_file_path):
