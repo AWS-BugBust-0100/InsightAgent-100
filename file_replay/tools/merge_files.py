@@ -163,6 +163,7 @@ def handle_diff_format_files(file_paths, out_file_path, step, memory):
             print
             "Complete {} rows".format(num)
         finally:
+
             # close files
             fout.close()
             for item in file_list:
