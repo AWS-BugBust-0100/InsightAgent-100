@@ -95,7 +95,7 @@ def get_agent_config_vars():
          
         # any post-processing
         agent_proxies = dict()
-        if len(agent_http_proxy) > 0:
+        if agent_http_proxy:
             agent_proxies['http'] = agent_http_proxy
         if len(agent_https_proxy) > 0:
             agent_proxies['https'] = agent_https_proxy
