@@ -317,7 +317,6 @@ def writeToCsv():
                 resource_usage_file.write("%s\n"%(fields))
         resource_usage_file.write("%s\n"%(log))
         resource_usage_file.flush()
-
     finally:
         resource_usage_file.close()
 
