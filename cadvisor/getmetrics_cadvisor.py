@@ -363,7 +363,7 @@ def get_cli_config_vars():
     elif options.quiet:
         config_vars['log_level'] = logging.WARNING
 
-    if len(options.time_zone) != 0 and options.time_zone in pytz.all_timezones:
+    if options.time_zone and options.time_zone in pytz.all_timezones:
         config_vars['time_zone'] = pytz.timezone(options.time_zone)
 
     return config_vars
@@ -951,7 +951,7 @@ def append_metric_data_to_entry(timestamp, field_name, data, instance, device=''
     # use the next non-null value to overwrite the prev value
     # for the same metric in the same timestamp
     if key in current_obj.keys():
-        if data is not None and len(str(data)) > 0:
+        if data is not None and str(data):
             current_obj[key] += '|' + str(data)
     else:
         current_obj[key] = str(data)

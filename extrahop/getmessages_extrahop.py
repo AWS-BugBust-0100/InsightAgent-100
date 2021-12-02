@@ -99,7 +99,7 @@ def start_data_processing():
         devices_ips_map[device['ipaddr4']] = device_id
 
     # filter devices ids
-    if len(devices_ids) == 0:
+    if not devices_ids:
         logger.error('Devices list is empty')
         sys.exit(1)
 
