@@ -73,43 +73,48 @@ def handle_csv_split(in_file_path):
     file_day = None
     output_file = None
     num = 0
-    with open(str(in_file_path), "rb") as _file:
-        output_header = _file.readline()
-        num += 1
-        buf_lines = _file.readlines(FILE_READ_CHUNK_SIZE)
-        while buf_lines:
-
-            for line in buf_lines:
-                timestamp = line[:10]
-                day = arrow.get(int(timestamp)).format('YYYY-MM-DD')
-
-                if day != file_day:
-                    file_day = day
-                    folder = os.path.join(in_dir, 'output-' + file_day)
-                    file_name = file_day + '.csv'
-                    if output_file:
-                        print 'Output is done'
-                        output_file.close()
-
-                    mkdir(folder)
-
-                    print 'Output start to write: ' + file_name
-                    out_path = os.path.join(folder, file_name)
-                    output_file = open(str(out_path), "a")
-                    output_file.write(output_header)
-                    output_file.write(line)
-
-                else:
-                    output_file.write(line)
-
-                num += 1
-                if num % 1000 == 0:
-                    output_file.flush()
-                    print "Complete {} rows".format(num)
-
+    try:
+        with open(str(in_file_path), "rb") as _file:
+            output_header = _file.readline()
+            num += 1
             buf_lines = _file.readlines(FILE_READ_CHUNK_SIZE)
+            while buf_lines:
+    
+                for line in buf_lines:
+                    timestamp = line[:10]
+                    day = arrow.get(int(timestamp)).format('YYYY-MM-DD')
+    
+                    if day != file_day:
+                        file_day = day
+                        folder = os.path.join(in_dir, 'output-' + file_day)
+                        file_name = file_day + '.csv'
+                        if output_file:
+                            print 'Output is done'
+                            output_file.close()
+    
+                        mkdir(folder)
+    
+                        print 'Output start to write: ' + file_name
+                        out_path = os.path.join(folder, file_name)
+                        output_file = open(str(out_path), "a")
+                        output_file.write(output_header)
+                        output_file.write(line)
+    
+                    else:
+                        output_file.write(line)
+    
+                    num += 1
+                    if num % 1000 == 0:
+                        output_file.flush()
+                        print "Complete {} rows".format(num)
+    
+                buf_lines = _file.readlines(FILE_READ_CHUNK_SIZE)
 
-    print "Complete {} rows".format(num)
+        print
+        "Complete {} rows".format(num)
+    finally:
+        output_file.close()
+
 
 
 def main():
