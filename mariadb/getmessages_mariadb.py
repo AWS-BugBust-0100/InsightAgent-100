@@ -43,6 +43,7 @@ def initialize_cache_connection():
             cache_cur.execute('CREATE TABLE "cache" ( "instance"	TEXT NOT NULL UNIQUE, "alias"	TEXT NOT NULL)')
     finally:
         cache_con.close()
+        cache_cur.close()
         
     return cache_con, cache_cur
 
