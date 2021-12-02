@@ -62,19 +62,23 @@ def init_previous_results():
         if(eachfile == "cpumetrics.txt"):
             get_cpuusage(eachfile, tokens, first_result)
         else:
-            txt_file = open(os.path.join(homepath,datadir,eachfile))
-            lines = txt_file.read().split("\n")
-            for eachline in lines:
-                tokens = eachline.split("=")
-                if(len(tokens) == 1):
-                    continue
-                if(eachfile == "diskmetrics.txt"):
-                    tokens[1] = float(float(tokens[1])*512/(1024*1024))
-                elif(eachfile == "diskusedmetrics.txt" or eachfile == "memmetrics.txt"):
-                    tokens[1] = float(float(tokens[1])/1024)
-                elif(eachfile == "networkmetrics.txt"):
-                    tokens[1] = float(float(tokens[1])/(1024*1024))
-                first_result[tokens[0]] = float(tokens[1])
+            try:
+                txt_file = open(os.path.join(homepath,datadir,eachfile))
+                lines = txt_file.read().split("\n")
+                for eachline in lines:
+                    tokens = eachline.split("=")
+                    if(len(tokens) == 1):
+                        continue
+                    if(eachfile == "diskmetrics.txt"):
+                        tokens[1] = float(float(tokens[1])*512/(1024*1024))
+                    elif(eachfile == "diskusedmetrics.txt" or eachfile == "memmetrics.txt"):
+                        tokens[1] = float(float(tokens[1])/1024)
+                    elif(eachfile == "networkmetrics.txt"):
+                        tokens[1] = float(float(tokens[1])/(1024*1024))
+                    first_result[tokens[0]] = float(tokens[1])
+            finally:
+                txt_file.close()
+                pass
     update_results(first_result)
     time.sleep(1)
     proc = subprocess.Popen([os.path.join(homepath,"proc","getmetrics.sh")], cwd=homepath, stdout=subprocess.PIPE, shell=True)
