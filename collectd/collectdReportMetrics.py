@@ -314,13 +314,13 @@ def calculate_avg_cpu_values(all_latest_timestamps, each_file, filenames, new_pr
                              start_time_epoch_l, date_l):
     try:
         csv_file_1 = open(os.path.join(csvpath, each_file + date_l))
-        csv_file_2 = open(os.path.join(
-            csvpath, 'aggregation-cpu-average/cpu-user-' + date_l))
-        csv_file_3 = open(os.path.join(
-            csvpath, 'aggregation-cpu-average/cpu-idle-' + date_l))
-        reader1 = csv.reader(csv_file_1)
-        reader2 = csv.reader(csv_file_2)
-        reader3 = csv.reader(csv_file_3)
+        with open(os.path.join(
+            csvpath, 'aggregation-cpu-average/cpu-user-' + date_l)) as csv_file_2:
+            with open(os.path.join(
+                csvpath, 'aggregation-cpu-average/cpu-idle-' + date_l)) as csv_file_3:
+                reader1 = csv.reader(csv_file_1)
+                reader2 = csv.reader(csv_file_2)
+                reader3 = csv.reader(csv_file_3)
 
         for row, row1, row2 in itertools.izip(reader1, reader2, reader3):
             if reader1.line_num > 1:
