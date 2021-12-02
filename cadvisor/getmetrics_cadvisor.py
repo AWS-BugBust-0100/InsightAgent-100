@@ -951,7 +951,7 @@ def append_metric_data_to_entry(timestamp, field_name, data, instance, device=''
     # use the next non-null value to overwrite the prev value
     # for the same metric in the same timestamp
     if key in current_obj.keys():
-        if data is not None and len(str(data)) > 0:
+        if data is not None and str(data):
             current_obj[key] += '|' + str(data)
     else:
         current_obj[key] = str(data)
