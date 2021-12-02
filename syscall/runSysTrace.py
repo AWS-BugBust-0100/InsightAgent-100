@@ -40,7 +40,8 @@ def updateFile(filepath, filename, newSession):
     if (os.stat(file).st_size == 0):
         open(os.path.join(file), 'a+').writelines(newSession+"\n")
     else:
-        lines = open(file).readlines()
+        with open(file) as f:
+            lines = f.readlines()
         if len(lines) == 1:        
             currentSession = lines[0].rstrip('\n')
             lines.append(newSession+'\n')
