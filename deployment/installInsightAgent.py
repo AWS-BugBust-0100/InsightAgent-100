@@ -45,7 +45,6 @@ def sshInstall(retry,hostname):
         stdin.write(password+'\n')
         stdin.flush()
         session.recv_exit_status() #wait for exec_command to finish
-        s.close()
         print "Install Succeed in", hostname
         q.task_done()
         return
@@ -60,6 +59,9 @@ def sshInstall(retry,hostname):
         return sshInstall(retry-1,hostname)
     except:
         print "Unexpected error in %s:"%hostname
+    finally:
+        s.close()
+
 
 def sshInstallHypervisor(retry,hostname):
     global user
