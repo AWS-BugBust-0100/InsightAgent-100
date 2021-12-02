@@ -50,7 +50,6 @@ def updateFile(filepath, filename, newSession):
                     conn2 = open(os.path.join(file), 'w+').writelines(lines[0:])
                 finally:
                     conn2.close()
-                    pass
             else:
                 lines.append(newSession+'\n')
                 oldSession = lines[0].rstrip('\n')
