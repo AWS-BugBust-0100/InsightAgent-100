@@ -73,8 +73,8 @@ try:
     command = "esxtop -b -n 1 > " + os.path.join(homepath,datadir) + "esxtopOutput.txt"
     print command
     date = time.strftime("%Y%m%d")
-    resource_usage_file = open(os.path.join(homepath,datadir+date+".csv"),'a+')
-    csvContent = resource_usage_file.readlines()
+    with open(os.path.join(homepath,datadir+date+".csv"),'a+') as resource_usage_file:
+        csvContent = resource_usage_file.readlines()
     numlines = len(csvContent)
     metricValues = []
     proc = subprocess.Popen(command, cwd=homepath, stdout=subprocess.PIPE, shell=True)
