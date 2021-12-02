@@ -82,10 +82,13 @@ def initPreviousResults():
         try:
             filename = "stat%s.txt"%dockers[i]
             statsFile = open(os.path.join(homepath,datadir+filename),'r')
+            data = statsFile.readlines()
         except IOError as e:
             print "I/O error({0}): {1}: {2}".format(e.errno, e.strerror, e.filename)
             continue
-        data = statsFile.readlines()
+        finally:
+            statsFile.close()
+
         for eachline in data:
             if isJson(eachline) == True:
                 metricData = json.loads(eachline)
@@ -201,6 +204,7 @@ def initPreviousResults():
     time.sleep(1)
     proc = subprocess.Popen([os.path.join(homepath,datadir+"getmetrics_docker.sh")], cwd=homepath, stdout=subprocess.PIPE, shell=True)
     (out,err) = proc.communicate()
+
 
 def getPreviousResults():
     print "In Function getPreviousResults()" 
