@@ -251,13 +251,14 @@ def query_messages_mariadb(args):
 
         # fetch all messages
         message_list = cursor.fetchall()
-
-        cursor.close()
-        conn.close()
-
+  
     except ProgrammingError as e:
         logger.error(e)
         logger.error('SQL execute error: '.format(sql_str))
+    finally:
+        cursor.close()
+        conn.close()
+        
     return message_list
 
 
